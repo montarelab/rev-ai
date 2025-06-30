@@ -1,12 +1,17 @@
-import argparse
+import asyncio
 import sys
 
+from loguru import logger as log
+from redis.asyncio import Redis
+
+from agents.orchestrator import CodeReviewOrchestrator
 from config import Config
 from errors import ValidationError, GitError, OllamaError
-from loguru import logger as log
-from services.file_writer import FileWriter
 from services.git_manager import GitManager
 from services.ollama_client import OllamaClient
+from views.enums import ReviewStatus
+from views.views import CodeReviewRequest
+import traceback
 
 
 class GitDiffSummarizer:
@@ -17,7 +22,7 @@ class GitDiffSummarizer:
         self.git_manager = GitManager(config.project_path)
         self.ollama_client = OllamaClient(config.ollama_url, config.ollama_model)
 
-    def run(self):
+    async def run(self):
         """Execute the complete diff summarization workflow."""
         try:
             log.info("Starting Git diff summarization...")
@@ -34,11 +39,44 @@ class GitDiffSummarizer:
                 self.config.master_branch
             )
 
+            # redis_client = Redis(
+            #     host='localhost',
+            #     port=6379,
+            #     db=0,
+            #     decode_responses=True,
+            #     socket_timeout=5,
+            #     socket_connect_timeout=5,
+            #     retry_on_timeout=True,
+            #     health_check_interval=30
+            # )
+
+            orchestrator = CodeReviewOrchestrator()
+
+            request = CodeReviewRequest(
+                code=diff_content,
+                language="python",
+                file_path=self.config.project_path,
+                project_id="TaskManager",
+                branch_name=self.config.local_branch
+            )
+
+            response = await orchestrator.start_review(request)
+            print(f"Review started with task_id: {response.task_id}")
+
+
+            # while True:
+            #     status = await orchestrator.get_review_status(response.task_id)
+            #     if status['status'] is ReviewStatus.COMPLETED:
+            #         log.info("Code review completed successfully!")
+            #         break
+            #     log.info(f"Current status: {status['status']}")
+            #     await asyncio.sleep(5)  # Wait for 5 seconds before the next iteration
+
             # Generate summary
-            summary = self.ollama_client.summarize_diff(diff_content)
+            # summary = self.ollama_client.summarize_diff(diff_content)
 
             # Write output
-            FileWriter.write_summary(self.config.output_file, summary, self.config)
+            # FileWriter.write_summary(self.config.output_file, summary, self.config)
 
             log.info("Git diff summarization completed successfully!")
 
@@ -47,5 +85,7 @@ class GitDiffSummarizer:
             sys.exit(1)
         except Exception as e:
             log.error(f"Unexpected error: {e}")
+            log.error(f"Traceback: {traceback.format_exc()}")
             sys.exit(1)
+
 

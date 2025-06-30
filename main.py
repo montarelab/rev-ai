@@ -1,4 +1,7 @@
 import argparse
+import asyncio
+
+import loguru
 from loguru import logger as log
 import sys
 
@@ -6,13 +9,6 @@ from config import Config
 from errors import ValidationError
 from services.git_diff_summarizer import GitDiffSummarizer
 from services.input_validator import InputValidator
-
-# Configure logging
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-# )
-# logger = logging.getLogger(__name__)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -70,14 +66,14 @@ Examples:
 
 
 
-def main():
+async def main():
     """Main entry point of the application."""
     parser = create_parser()
     args = parser.parse_args()
 
     # Configure logging level
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    # if args.verbose:
+    #     log.level(loguru.)
 
     try:
         # Validate inputs
@@ -100,9 +96,9 @@ def main():
             ollama_url=args.ollama_url
         )
 
-        # Run the summarizer
+        # Run the summarizer`
         summarizer = GitDiffSummarizer(config)
-        summarizer.run()
+        await summarizer.run()
 
     except ValidationError as e:
         log.error(f"Validation failed: {e}")
@@ -116,4 +112,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
