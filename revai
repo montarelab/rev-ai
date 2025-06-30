@@ -1,0 +1,2 @@
+#!/bin/bash
+python main.py ~/projects/mini-tasker/ feature/task-crud main output.txt
