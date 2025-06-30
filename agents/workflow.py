@@ -17,12 +17,12 @@ from pydantic import BaseModel, Field
 from views.views import AgentType, ReviewStatus, AgentFeedback
 
 
-
 class Severity(str, Enum):
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
+
 
 class Issue(BaseModel):
     type: str
@@ -30,6 +30,7 @@ class Issue(BaseModel):
     file_path: str
     description: str
     recommendation: str
+
 
 class AgentAnalysisResponse(BaseModel):
     score: int = Field(ge=0, le=100)
@@ -40,28 +41,35 @@ class AgentAnalysisResponse(BaseModel):
 class SecurityAnalysisResponse(AgentAnalysisResponse):
     pass
 
+
 class ArchitectureAnalysisResponse(AgentAnalysisResponse):
     pass
+
 
 class PerformanceAnalysisResponse(AgentAnalysisResponse):
     pass
 
+
 class DocumentationAnalysisResponse(AgentAnalysisResponse):
     pass
+
 
 class TechLeadDecision(BaseModel):
     final_decision: Literal["approve", "reject", "request_changes"]
     reasoning: str
     priority_issues: List[str]
 
+
 class CodeFix(BaseModel):
     file_path: str
     fixed_code: str
     explanation: str
 
+
 class EngineerResponse(BaseModel):
     fixes_implemented: List[CodeFix]
     summary: str
+
 
 # Agent Prompt Templates
 
@@ -93,6 +101,7 @@ Git Diff:
 
 Provide a thorough security analysis following the SecurityAnalysisResponse model.""")
 
+
 def create_architecture_agent_prompt():
     return ChatPromptTemplate.from_template("""You are a software architect analyzing git diff for architectural quality and design patterns.
 
@@ -120,6 +129,7 @@ Git Diff:
 {git_diff}
 
 Provide a comprehensive architectural analysis following the ArchitectureAnalysisResponse model.""")
+
 
 def create_performance_agent_prompt():
     return ChatPromptTemplate.from_template("""You are a performance engineer analyzing git diff for performance implications.
@@ -149,6 +159,7 @@ Git Diff:
 
 Provide a detailed performance analysis following the PerformanceAnalysisResponse model.""")
 
+
 def create_documentation_agent_prompt():
     return ChatPromptTemplate.from_template("""You are a technical writer analyzing git diff for documentation quality.
 
@@ -175,6 +186,7 @@ Git Diff:
 {git_diff}
 
 Provide a thorough documentation analysis following the DocumentationAnalysisResponse model.""")
+
 
 def create_tech_lead_agent_prompt():
     return ChatPromptTemplate.from_template("""You are a tech lead making the final decision on whether to approve this merge.
@@ -207,6 +219,7 @@ INSTRUCTIONS:
 
 Make your final decision following the TechLeadDecision model.""")
 
+
 def create_engineer_agent_prompt():
     return ChatPromptTemplate.from_template("""You are a software engineer tasked with implementing fixes based on expert feedback.
 
@@ -237,64 +250,64 @@ def create_llm():
         num_predict=2048,
     )
 
-def create_security_agent():
-    """Create security analysis agent"""
-    return create_react_agent(
-        create_llm(),
-        tools=[],
-        response_format=SecurityAnalysisResponse,
-        prompt=create_security_agent_prompt()
-    )
+    def create_security_agent(prompt_dict: dict):
+        """Create security analysis agent"""
+        return create_react_agent(
+            create_llm(),
+            tools=[],
+            response_format=SecurityAnalysisResponse,
+            prompt=create_security_agent_prompt().invoke(prompt_dict).to_string(),
+        )
 
 
-def create_architecture_agent():
-    """Create architecture analysis agent"""
-    return create_react_agent(
-        create_llm(),
-        response_format=ArchitectureAnalysisResponse,
-        tools=[],
-        prompt=create_architecture_agent_prompt()
-    )
+    def create_architecture_agent(prompt_dict: dict):
+        """Create architecture analysis agent"""
+        return create_react_agent(
+            create_llm(),
+            response_format=ArchitectureAnalysisResponse,
+            tools=[],
+            prompt=create_architecture_agent_prompt().invoke(prompt_dict).to_string(),
+        )
 
 
-def create_performance_agent():
-    """Create performance analysis agent"""
-    return create_react_agent(
-        create_llm(),
-        tools=[],
-        response_format=PerformanceAnalysisResponse,
-        prompt=create_performance_agent_prompt()
-    )
+    def create_performance_agent(prompt_dict: dict):
+        """Create performance analysis agent"""
+        return create_react_agent(
+            create_llm(),
+            tools=[],
+            response_format=PerformanceAnalysisResponse,
+            prompt=create_performance_agent_prompt().invoke(prompt_dict).to_string(),
+        )
 
 
-def create_documentation_agent():
-    """Create documentation analysis agent"""
-    return create_react_agent(
-        create_llm(),
-        tools=[],
-        response_format=DocumentationAnalysisResponse,
-        prompt=create_documentation_agent_prompt()
-    )
+    def create_documentation_agent(prompt_dict: dict):
+        """Create documentation analysis agent"""
+        return create_react_agent(
+            create_llm(),
+            tools=[],
+            response_format=DocumentationAnalysisResponse,
+            prompt=create_documentation_agent_prompt().invoke(prompt_dict).to_string(),
+        )
 
 
-def create_tech_lead_agent():
-    """Create tech lead decision agent"""
-    return create_react_agent(
-        create_llm(),
-        tools=[],
-        response_format=TechLeadDecision,
-        prompt=create_tech_lead_agent_prompt()
-    )
+    def create_tech_lead_agent(prompt_dict: dict):
+        """Create tech lead decision agent"""
+        return create_react_agent(
+            create_llm(),
+            tools=[],
+            response_format=TechLeadDecision,
+            prompt=create_tech_lead_agent_prompt().invoke(prompt_dict).to_string(),
+        )
 
 
-def create_engineer_agent():
-    """Create software engineer fixing agent"""
-    return create_react_agent(
-        create_llm(),
-        tools=[],
-        response_format=EngineerResponse,
-        prompt=create_engineer_agent_prompt()
-    )
+    def create_engineer_agent(prompt_dict: dict):
+        """Create software engineer fixing agent"""
+        return create_react_agent(
+            create_llm(),
+            tools=[],
+            response_format=EngineerResponse,
+            prompt=create_engineer_agent_prompt().invoke(prompt_dict).to_string(),
+        )
 
 
 # =============================================================================
@@ -318,24 +331,26 @@ class CodeReviewState(TypedDict):
     retry_count: int
     next_agent: Optional[str]  # For routing between agents
 
+
 async def security_analysis_node(state: CodeReviewState) -> CodeReviewState:
     """Security analysis node"""
     try:
         start_time = datetime.now()
-        agent = create_security_agent()
+        print("start")
+        agent = create_security_agent({"git_diff": state['code']})
+        print("agent created")
 
         # Create analysis message
         analysis_message = HumanMessage(
             content=f"Analyze this {state['language']} code for security issues:\n\n{state['code']}"
         )
 
-
         print('start')
         # Run security analysis
+
         result = await agent.ainvoke({
             "git_diff": state['code'],
             "messages": [analysis_message]
-
         })
 
         print("ready")
@@ -345,12 +360,12 @@ async def security_analysis_node(state: CodeReviewState) -> CodeReviewState:
 
         # Update state
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.SECURITY.value,
-            status = "completed",
-            data = result['messages'][1],
-            timestamp = datetime.now(),
-            execution_time = execution_time,
-            errors = []
+            agent_type=AgentType.SECURITY.value,
+            status="completed",
+            data=result['messages'][1],
+            timestamp=datetime.now(),
+            execution_time=execution_time,
+            errors=[]
         ))
 
         log.info(f"Security analysis completed in {execution_time:.2f}s")
@@ -358,13 +373,13 @@ async def security_analysis_node(state: CodeReviewState) -> CodeReviewState:
 
     except Exception as e:
         log.error(f"Security analysis failed: {e}")
-        state["agent_feedback"].append(AgentFeedback (
-            agent_type = AgentType.SECURITY.value,
-            status = "failed",
-            data = {},
-            timestamp = datetime.now(),
-            execution_time = 0,
-            errors = [str(e)]
+        state["agent_feedback"].append(AgentFeedback(
+            agent_type=AgentType.SECURITY.value,
+            status="failed",
+            data={},
+            timestamp=datetime.now(),
+            execution_time=0,
+            errors=[str(e)]
         ))
         return state
 
@@ -387,14 +402,13 @@ async def performance_analysis_node(state: CodeReviewState) -> CodeReviewState:
         execution_time = (datetime.now() - start_time).total_seconds()
 
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.PERFORMANCE.value,
-            status = "completed",
-            data = result["messages"][1],
-            timestamp = datetime.now(),
-            execution_time = execution_time,
-            errors = []
+            agent_type=AgentType.PERFORMANCE.value,
+            status="completed",
+            data=result["messages"][1],
+            timestamp=datetime.now(),
+            execution_time=execution_time,
+            errors=[]
         ))
-
 
         log.info(f"Performance analysis completed in {execution_time:.2f}s")
         return state
@@ -402,12 +416,12 @@ async def performance_analysis_node(state: CodeReviewState) -> CodeReviewState:
     except Exception as e:
         log.error(f"Performance analysis failed: {e}")
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.PERFORMANCE.value,
-            status = "failed",
-            data = {},
-            timestamp = datetime.now(),
-            execution_time = 0,
-            errors = [str(e)]
+            agent_type=AgentType.PERFORMANCE.value,
+            status="failed",
+            data={},
+            timestamp=datetime.now(),
+            execution_time=0,
+            errors=[str(e)]
         ))
         return state
 
@@ -430,12 +444,12 @@ async def architecture_analysis_node(state: CodeReviewState) -> CodeReviewState:
         execution_time = (datetime.now() - start_time).total_seconds()
 
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.ARCHITECTURE.value,
-            status = "completed",
-            data = result["messages"][1],
-            timestamp = datetime.now(),
-            execution_time = execution_time,
-            errors = []
+            agent_type=AgentType.ARCHITECTURE.value,
+            status="completed",
+            data=result["messages"][1],
+            timestamp=datetime.now(),
+            execution_time=execution_time,
+            errors=[]
         ))
 
         log.info(f"Architecture analysis completed in {execution_time:.2f}s")
@@ -444,12 +458,12 @@ async def architecture_analysis_node(state: CodeReviewState) -> CodeReviewState:
     except Exception as e:
         log.error(f"Architecture analysis failed: {e}")
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.ARCHITECTURE.value,
-            status = "failed",
-            data = {},
-            timestamp = datetime.now(),
-            execution_time = 0,
-            errors = [str(e)]
+            agent_type=AgentType.ARCHITECTURE.value,
+            status="failed",
+            data={},
+            timestamp=datetime.now(),
+            execution_time=0,
+            errors=[str(e)]
         ))
         return state
 
@@ -472,12 +486,12 @@ async def documentation_analysis_node(state: CodeReviewState) -> CodeReviewState
         execution_time = (datetime.now() - start_time).total_seconds()
 
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.DOCUMENTATION.value,
-            status = "completed",
-            data = result["messages"][1],
-            timestamp = datetime.now(),
-            execution_time = execution_time,
-            errors = []
+            agent_type=AgentType.DOCUMENTATION.value,
+            status="completed",
+            data=result["messages"][1],
+            timestamp=datetime.now(),
+            execution_time=execution_time,
+            errors=[]
         ))
 
         log.info(f"Documentation analysis completed in {execution_time:.2f}s")
@@ -486,12 +500,12 @@ async def documentation_analysis_node(state: CodeReviewState) -> CodeReviewState
     except Exception as e:
         log.error(f"Documentation analysis failed: {e}")
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.DOCUMENTATION.value,
-            status = "failed",
-            data = {},
-            timestamp = datetime.now(),
-            execution_time = 0,
-            errors = [str(e)]
+            agent_type=AgentType.DOCUMENTATION.value,
+            status="failed",
+            data={},
+            timestamp=datetime.now(),
+            execution_time=0,
+            errors=[str(e)]
         ))
         return state
 
@@ -547,12 +561,12 @@ async def tech_lead_review_node(state: CodeReviewState) -> CodeReviewState:
             state["next_agent"] = None
 
         state["agent_feedback"].append(AgentFeedback(
-            agent_type = AgentType.TECH_LEAD.value,
-            status = "completed",
-            data = result["messages"][1],
-            timestamp = datetime.now(),
-            execution_time = execution_time,
-            errors = []
+            agent_type=AgentType.TECH_LEAD.value,
+            status="completed",
+            data=result["messages"][1],
+            timestamp=datetime.now(),
+            execution_time=execution_time,
+            errors=[]
         ))
 
         state["updated_at"] = datetime.now()
@@ -598,12 +612,12 @@ async def software_engineer_node(state: CodeReviewState) -> CodeReviewState:
         state["next_agent"] = None
 
         state["agent_feedback"]["software_engineer"] = AgentFeedback(
-            agent_type = AgentType.SOFTWARE_ENGINEER.value,
-            status = "completed",
-            data = result["messages"][1],
-            timestamp = datetime.now(),
-            execution_time = execution_time,
-            errors = []
+            agent_type=AgentType.SOFTWARE_ENGINEER.value,
+            status="completed",
+            data=result["messages"][1],
+            timestamp=datetime.now(),
+            execution_time=execution_time,
+            errors=[]
         )
 
         log.info(f"Software engineer fixes completed in {execution_time:.2f}s")
