@@ -10,6 +10,7 @@ from config import Config
 from errors import ValidationError
 from services.git_diff_summarizer import GitDiffSummarizer
 from services.input_validator import InputValidator
+from agents.git_chat import GitDiffChat
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,34 +25,51 @@ log.add(f"{logs_dir}/app.log", rotation="1 MB", retention="10 days", level="DEBU
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
-        description="Generate AI-powered summaries of Git branch differences",
+        description="AI-powered Git diff analysis with direct and interactive modes",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Direct Git Diff Analysis:
   %(prog)s /path/to/project feature-branch main output.md
   %(prog)s ./my-project develop master summary.txt --model llama3.2
   %(prog)s ~/projects/app feature origin/main report.md --ollama-url http://localhost:11434
+
+  # Interactive Chat Mode:
+  %(prog)s --interactive
+  %(prog)s --interactive --model llama3.2 --ollama-url http://localhost:11434
         """
     )
 
+    # Add teacher mode flag
+    parser.add_argument(
+        "--interactive", "-i",
+        action="store_true",
+        help="Start interactive mode for guided git diff analysis"
+    )
+
+    # Make positional arguments optional when using interactive mode
     parser.add_argument(
         "project_path",
-        help="Path to the Git project directory"
+        nargs='?',
+        help="Path to the Git project directory (required for direct diff analysis)"
     )
 
     parser.add_argument(
         "local_branch",
-        help="Name of the local/feature branch to compare"
+        nargs='?',
+        help="Name of the local/feature branch to compare (required for diff analysis)"
     )
 
     parser.add_argument(
         "master_branch",
-        help="Name of the master/base branch to compare against",
+        nargs='?',
+        help="Name of the master/base branch to compare against (required for diff analysis)",
     )
 
     parser.add_argument(
         "output_file",
-        help="Path to the output file for the summary"
+        nargs='?',
+        help="Path to the output file for the summary (required for diff analysis)"
     )
 
     parser.add_argument(
@@ -91,8 +109,20 @@ async def main():
         print("Verbose mode enabled")
         log.add(sys.stderr, level="INFO",
                    format="<green>{time:HH:mm:ss}</green> | <level>{level}</level>: <level>{message}</level>")
+
     try:
-        # Validate inputs
+        # Check if interactive mode is requested
+        if args.interactive:
+            log.info("Starting interactive chat mode...")
+            chat = GitDiffChat(model=args.model, ollama_url=args.ollama_url)
+            await chat.start_interactive_session()
+            return
+
+        # Validate required arguments for diff analysis mode
+        if not all([args.project_path, args.local_branch, args.master_branch, args.output_file]):
+            parser.error("project_path, local_branch, master_branch, and output_file are required for direct diff analysis mode. Use --interactive for guided mode.")
+
+        # Validate inputs for diff analysis
         log.info("Validating inputs...")
         InputValidator.check_git_availability()
         InputValidator.check_ollama_availability(args.ollama_url)
@@ -112,7 +142,7 @@ async def main():
             ollama_url=args.ollama_url
         )
 
-        # Run the summarizer`
+        # Run the summarizer
         summarizer = GitDiffSummarizer(config)
         await summarizer.run()
 

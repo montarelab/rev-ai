@@ -29,11 +29,15 @@ class GitDiffSummarizer:
                 self.config.master_branch
             )
 
+            log.info("Validated branches successfully.")
+
             # Get diff
             diff_content = self.git_manager.get_diff(
                 self.config.local_branch,
                 self.config.master_branch
             )
+
+            log.info("Fetched Git diff successfully.")
 
             # redis_client = Redis(
             #     host='localhost',
