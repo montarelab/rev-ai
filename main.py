@@ -1,14 +1,24 @@
 import argparse
 import asyncio
-
-import loguru
-from loguru import logger as log
+import os
 import sys
+
+import pyfiglet
+from loguru import logger as log
 
 from config import Config
 from errors import ValidationError
 from services.git_diff_summarizer import GitDiffSummarizer
 from services.input_validator import InputValidator
+from dotenv import load_dotenv
+
+load_dotenv()
+
+log.remove()
+
+logs_dir = os.getenv("LOGS_DIR")
+os.makedirs(logs_dir, exist_ok=True)
+log.add(f"{logs_dir}/app.log", rotation="1 MB", retention="10 days", level="DEBUG")
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -68,13 +78,19 @@ Examples:
 
 async def main():
     """Main entry point of the application."""
+    cols = os.get_terminal_size().columns
+    banner = pyfiglet.figlet_format("RevAI", font="slant")
+    for line in banner.splitlines():
+        print(line.center(cols))
+
     parser = create_parser()
     args = parser.parse_args()
 
     # Configure logging level
-    # if args.verbose:
-    #     log.level(loguru.)
-
+    if args.verbose:
+        print("Verbose mode enabled")
+        log.add(sys.stderr, level="INFO",
+                   format="<green>{time:HH:mm:ss}</green> | <level>{level}</level>: <level>{message}</level>")
     try:
         # Validate inputs
         log.info("Validating inputs...")

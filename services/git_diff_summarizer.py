@@ -1,17 +1,13 @@
-import asyncio
 import sys
+import traceback
 
 from loguru import logger as log
-from redis.asyncio import Redis
 
-from agents.orchestrator import CodeReviewOrchestrator
 from config import Config
 from errors import ValidationError, GitError, OllamaError
+from services.file_writer import FileWriter
 from services.git_manager import GitManager
 from services.ollama_client import OllamaClient
-from views.enums import ReviewStatus
-from views.views import CodeReviewRequest
-import traceback
 
 
 class GitDiffSummarizer:
@@ -50,18 +46,18 @@ class GitDiffSummarizer:
             #     health_check_interval=30
             # )
 
-            orchestrator = CodeReviewOrchestrator()
-
-            request = CodeReviewRequest(
-                code=diff_content,
-                language="python",
-                file_path=self.config.project_path,
-                project_id="TaskManager",
-                branch_name=self.config.local_branch
-            )
-
-            response = await orchestrator.start_review(request)
-            print(f"Review started with task_id: {response.task_id}")
+            # orchestrator = CodeReviewOrchestrator()
+            #
+            # request = CodeReviewRequest(
+            #     code=diff_content,
+            #     language="python",
+            #     file_path=self.config.project_path,
+            #     project_id="TaskManager",
+            #     branch_name=self.config.local_branch
+            # )
+            #
+            # response = await orchestrator.start_review(request)
+            # print(f"Review started with task_id: {response.task_id}")
 
 
             # while True:
@@ -73,10 +69,10 @@ class GitDiffSummarizer:
             #     await asyncio.sleep(5)  # Wait for 5 seconds before the next iteration
 
             # Generate summary
-            # summary = self.ollama_client.summarize_diff(diff_content)
+            summary = self.ollama_client.summarize_diff(diff_content)
 
             # Write output
-            # FileWriter.write_summary(self.config.output_file, summary, self.config)
+            FileWriter.write_summary(self.config.output_file, summary, self.config)
 
             log.info("Git diff summarization completed successfully!")
 
