@@ -1,0 +1,34 @@
+services:
+  rev-ai:
+    build: .
+    container_name: rev-ai-app
+    environment:
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2}
+      - LOGS_DIR=/app/logs
+      - PYTHONPATH=/app
+    volumes:
+      - ${GIT_REPO_PATH:-./}:/workspace:ro
+      - ./logs:/app/logs
+    working_dir: /workspace
+    depends_on:
+      - ollama
+    networks:
+      - rev-ai-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: rev-ai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - rev-ai-network
+
+volumes:
+  ollama_data:
+
+networks:
+  rev-ai-network:
+    driver: bridge

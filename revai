@@ -1,4 +1,2 @@
 #!/bin/bash
 python main.py ~/projects/mini-tasker/ feature/task-crud main output.txt "$@"
-
-# hello please check branch feature/task-crud to main in /home/montare/projects/mini-tasker and write results to output.md
