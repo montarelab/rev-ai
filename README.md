@@ -10,29 +10,7 @@ An agentic Python application that provides intelligent analysis of git branch c
 - **Docker Support**: Fully containerized with Ollama integration
 - **Comprehensive Reports**: Security, performance, architecture, and documentation insights
 
-## Quick Start
-
-### Using Docker (Recommended)
-
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd rev-ai
-
-# Start services with Docker Compose
-docker-compose up -d
-
-# Pull the AI model (first time only)
-docker-compose exec ollama ollama pull llama3.2
-
-# Analyze changes between branches
-docker-compose run --rm rev-ai python main.py /workspace feature-branch main output.md
-
-# Interactive mode
-docker-compose run --rm rev-ai python main.py --interactive
-```
-
-### Local Installation
+## Installation
 
 ```bash
 # Install dependencies
@@ -79,31 +57,6 @@ python main.py --interactive --model codellama:7b --ollama-url http://localhost:
 # - Get explanations of security or performance concerns
 # - Receive suggestions for improvements
 ```
-
-## Docker Documentation
-
-For detailed Docker usage, configuration, and troubleshooting, see the docker-compose.yml file.
-
-## Project Vision
-
-## Architecture
-
-### Agent System
-
-- **Tech Lead Agent**: Supervisor that orchestrates the analysis workflow
-- **Security Agent**: Identifies security vulnerabilities and risks
-- **Performance Agent**: Analyzes performance implications
-- **Architecture Agent**: Reviews structural and design patterns
-- **Documentation Agent**: Ensures proper documentation and clarity
-
-### Technology Stack
-
-- **Python 3.12+**: Core application language
-- **LangChain**: AI agent framework and orchestration
-- **LangGraph**: Workflow management and agent coordination
-- **Ollama**: Local LLM inference for privacy and control
-- **Docker**: Containerization and deployment
-- **Git**: Version control integration
 
 ## Configuration
 
