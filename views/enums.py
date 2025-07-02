@@ -12,6 +12,7 @@ class ReviewStatus(str, Enum):
 
 class AgentType(str, Enum):
     SECURITY = "security"
+    ORCHESTRATOR = "orchestrator"
     PERFORMANCE = "performance"
     ARCHITECTURE = "architecture"
     DOCUMENTATION = "documentation"

@@ -10,7 +10,7 @@ from config import Config
 from errors import ValidationError
 from services.git_diff_summarizer import GitDiffSummarizer
 from services.input_validator import InputValidator
-from agents.git_chat import GitDiffChat
+from services.git_chat import GitDiffChat
 from dotenv import load_dotenv
 
 load_dotenv()

@@ -39,39 +39,6 @@ class GitDiffSummarizer:
 
             log.info("Fetched Git diff successfully.")
 
-            # redis_client = Redis(
-            #     host='localhost',
-            #     port=6379,
-            #     db=0,
-            #     decode_responses=True,
-            #     socket_timeout=5,
-            #     socket_connect_timeout=5,
-            #     retry_on_timeout=True,
-            #     health_check_interval=30
-            # )
-
-            # orchestrator = CodeReviewOrchestrator()
-            #
-            # request = CodeReviewRequest(
-            #     code=diff_content,
-            #     language="python",
-            #     file_path=self.config.project_path,
-            #     project_id="TaskManager",
-            #     branch_name=self.config.local_branch
-            # )
-            #
-            # response = await orchestrator.start_review(request)
-            # print(f"Review started with task_id: {response.task_id}")
-
-
-            # while True:
-            #     status = await orchestrator.get_review_status(response.task_id)
-            #     if status['status'] is ReviewStatus.COMPLETED:
-            #         log.info("Code review completed successfully!")
-            #         break
-            #     log.info(f"Current status: {status['status']}")
-            #     await asyncio.sleep(5)  # Wait for 5 seconds before the next iteration
-
             # Generate summary
             summary = self.ollama_client.summarize_diff(diff_content)
 
