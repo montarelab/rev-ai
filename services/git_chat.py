@@ -1,13 +1,8 @@
-import asyncio
-from pathlib import Path
-from tabnanny import verbose
-from typing import Optional, Dict, Any
-
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_ollama import ChatOllama
-from langgraph.prebuilt import create_react_agent
+from langchain.agents.react.agent import create_react_agent
+
 from loguru import logger as log
 
 from config import Config
@@ -32,10 +27,7 @@ async def analyze_git_diff(project_path: str, local_branch: str, master_branch: 
         Success message with output file location
     """
     try:
-        print("P")
-
         # Create configuration
-
         InputValidator.check_git_availability()
         InputValidator.check_ollama_availability(ollama_url)
 
@@ -53,16 +45,9 @@ async def analyze_git_diff(project_path: str, local_branch: str, master_branch: 
             ollama_url=ollama_url
         )
 
-
-        
-
         # Run the summarizer
-        print("Start summarizing")
         summarizer = GitDiffSummarizer(config)
         await summarizer.run()
-
-        print("Summarizer was executed")
-        
         return f"✅ Git diff analysis completed successfully! Results saved to: {output_file}"
         
     except Exception as e:
@@ -127,7 +112,7 @@ class GitDiffChat:
         return ChatOllama(
             model=self.model,
             base_url=self.ollama_url,
-            temperature=0.1,  # Slightly creative but focused
+            temperature=0.1,
             timeout=300,
             num_predict=2048,
         )
@@ -136,13 +121,10 @@ class GitDiffChat:
         """Create the reactive agent with tools."""
 
         return create_react_agent(
-            model=self.llm,
+            self.llm,
             tools=[analyze_git_diff],
             prompt=create_git_diff_chat_prompt(),
-            debug=True,
         )
-
-        # return AgentExecutor(agent=agent, tools=tools)
 
     async def chat(self, user_input: str) -> str:
         """Process user input and return teacher response."""
@@ -166,7 +148,7 @@ class GitDiffChat:
     async def start_interactive_session(self):
         """Start an interactive session focused on git diff analysis."""
         print("\n" + "="*60)
-        print("� RevAI Interactive Mode - Git Diff Analysis �")
+        print("RevAI Interactive Mode - Git Diff Analysis")
         print("="*60)
         print("\nWelcome! I help you analyze changes between Git branches before merging.")
         print("I'll gather the information needed and generate a comprehensive summary.")
@@ -179,10 +161,10 @@ class GitDiffChat:
 Hello! I'm here to help you analyze the differences between your Git branches before merging.
 
 To generate a comprehensive summary, I need the following information:
-📁 Project path (Git repository directory)
-🌿 Local branch (your feature/working branch)
-🎯 Target branch (branch you want to merge into, e.g., main/master)
-📄 Output file (where to save the analysis report)
+🔹 Project path (Git repository directory)
+🔹 Local branch (your feature/working branch)
+🔹 Target branch (branch you want to merge into, e.g., main/master)
+🔹 Output file (where to save the analysis report)
 
 You can provide this information in any order, or just tell me what you'd like to analyze!
         """
@@ -218,25 +200,19 @@ You can provide this information in any order, or just tell me what you'd like t
                 print(f"\n❌ Sorry, I encountered an error: {str(e)}")
                 print("Please try again or type 'exit' to quit.")
     
-    def _show_help(self):
+    @staticmethod
+    def _show_help():
         """Show help examples for git diff analysis."""
-        print("\n📚 RevAI Interactive Help:")
-        print("\n🔹 Quick Start Examples:")
+        print("\nRevAI Interactive Help:")
+        print("\nQuick Start Examples:")
         print("  - 'Analyze my feature-branch against main in /home/user/myproject'")
         print("  - 'Compare develop with master, save to summary.md'")
         print("  - 'I want to check my-feature branch before merging to main'")
         
-        print("\n🔹 Required Information:")
-        print("  📁 Project path: '/path/to/your/git/repository'")
-        print("  🌿 Local branch: 'feature-branch', 'develop', 'my-feature'")  
-        print("  🎯 Target branch: 'main', 'master', 'staging'")
-        print("  📄 Output file: 'summary.md', 'analysis.txt', 'report.md'")
-        
-        print("\n🔹 What You'll Get:")
-        print("  ✅ Comprehensive diff analysis")
-        print("  ✅ Code quality assessment") 
-        print("  ✅ Security vulnerability checks")
-        print("  ✅ Performance impact analysis")
-        print("  ✅ Merge recommendations")
+        print("\nRequired Information:")
+        print("  🔹 Project path: '/path/to/your/git/repository'")
+        print("  🔹 Local branch: 'feature-branch', 'develop', 'my-feature'")
+        print("  🔹 Target branch: 'main', 'master', 'staging'")
+        print("  🔹 Output file: 'summary.md', 'analysis.txt', 'report.md'")
         
         print("\n💡 Just provide the information in any order and I'll help you generate the analysis!")

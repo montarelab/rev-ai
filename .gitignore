@@ -4,5 +4,4 @@ __pycache__
 .env.*
 .ipynb_checkpoints
 .idea
-output.md
 logs

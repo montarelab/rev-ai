@@ -1,19 +1,20 @@
 import json
 
 import requests
+from langchain_ollama import ChatOllama
 
 from errors import OllamaError
 from loguru import logger as log
 
 
-class OllamaClient:
+class DiffSummarizerClient:
     """Handles communication with Ollama for AI summarization."""
 
     def __init__(self, url: str, model: str):
         self.url = url
         self.model = model
 
-    def summarize_diff(self, diff_content: str) -> str:
+    async def summarize_diff(self, diff_content: str) -> str:
         """Send diff to Ollama for summarization."""
         if not diff_content or diff_content.strip() == "No differences found between the specified branches.":
             return diff_content
@@ -23,25 +24,18 @@ class OllamaClient:
         try:
             log.info(f"Requesting summary from Ollama using model: {self.model}")
 
-            payload = {
-                "model": self.model,
-                "prompt": prompt,
-                "stream": False
-            }
-
-            response = requests.post(
-                f"{self.url}/api/generate",
-                json=payload,
-                timeout=300  # 5 minutes timeout
+            chat = ChatOllama(
+                model=self.model,
+                base_url=self.url,
+                temperature=0.1,
+                timeout=300,
+                num_predict=2048,
+                prompt=prompt
             )
-            response.raise_for_status()
 
-            result = response.json()
+            response = await chat.ainvoke(prompt)
 
-            if "response" not in result:
-                raise OllamaError("Invalid response format from Ollama")
-
-            return result["response"].strip()
+            return response.content.strip()
 
         except requests.exceptions.RequestException as e:
             raise OllamaError(f"Failed to communicate with Ollama: {e}")

@@ -40,14 +40,12 @@ Examples:
         """
     )
 
-    # Add teacher mode flag
     parser.add_argument(
         "--interactive", "-i",
         action="store_true",
         help="Start interactive mode for guided git diff analysis"
     )
 
-    # Make positional arguments optional when using interactive mode
     parser.add_argument(
         "project_path",
         nargs='?',
@@ -96,15 +94,12 @@ Examples:
 
 async def main():
     """Main entry point of the application."""
-    cols = os.get_terminal_size().columns
-    banner = pyfiglet.figlet_format("RevAI", font="slant")
-    for line in banner.splitlines():
-        print(line.center(cols))
+    await print_banner()
 
     parser = create_parser()
     args = parser.parse_args()
 
-    # Configure logging level
+    # Verbose mode
     if args.verbose:
         print("Verbose mode enabled")
         log.add(sys.stderr, level="INFO",
@@ -155,6 +150,13 @@ async def main():
     except Exception as e:
         log.error(f"Unexpected error: {e}")
         sys.exit(1)
+
+
+async def print_banner():
+    cols = os.get_terminal_size().columns
+    banner = pyfiglet.figlet_format("RevAI", font="slant")
+    for line in banner.splitlines():
+        print(line.center(cols))
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from config import Config
 from errors import ValidationError, GitError, OllamaError
 from services.file_writer import FileWriter
 from services.git_manager import GitManager
-from services.ollama_client import OllamaClient
+from services.summarizer_client import DiffSummarizerClient
 
 
 class GitDiffSummarizer:
@@ -16,7 +16,7 @@ class GitDiffSummarizer:
     def __init__(self, config: Config):
         self.config = config
         self.git_manager = GitManager(config.project_path)
-        self.ollama_client = OllamaClient(config.ollama_url, config.ollama_model)
+        self.ollama_client = DiffSummarizerClient(config.ollama_url, config.ollama_model)
 
     async def run(self):
         """Execute the complete diff summarization workflow."""
@@ -40,7 +40,7 @@ class GitDiffSummarizer:
             log.info("Fetched Git diff successfully.")
 
             # Generate summary
-            summary = self.ollama_client.summarize_diff(diff_content)
+            summary = await self.ollama_client.summarize_diff(diff_content)
 
             # Write output
             FileWriter.write_summary(self.config.output_file, summary, self.config)
