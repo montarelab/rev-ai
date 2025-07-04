@@ -23,11 +23,10 @@ INSTRUCTIONS:
 - Assess the severity based on exploitability and impact
 - Provide specific line numbers when possible
 - Give actionable recommendations for fixes
+- After you're done with your tasks, respond to the supervisor directly
 
-Git Diff:
-{git_diffs}
 
-Provide a thorough security analysis following the SecurityAnalysisResponse model.""")
+""")
 
 
 def create_architecture_agent_prompt():
@@ -52,11 +51,9 @@ INSTRUCTIONS:
 - Consider the existing codebase context
 - Identify opportunities for refactoring
 - Rate the overall architectural quality
+- After you're done with your tasks, respond to the supervisor directly
 
-Git Diff:
-{git_diffs}
-
-Provide a comprehensive architectural analysis following the ArchitectureAnalysisResponse model.""")
+""")
 
 
 def create_performance_agent_prompt():
@@ -81,11 +78,9 @@ INSTRUCTIONS:
 - Assess scalability implications
 - Consider both CPU and memory performance
 - Provide optimization recommendations
+- After you're done with your tasks, respond to the supervisor directly
 
-Git Diff:
-{git_diffs}
-
-Provide a detailed performance analysis following the PerformanceAnalysisResponse model.""")
+""")
 
 
 def create_documentation_agent_prompt():
@@ -109,17 +104,35 @@ INSTRUCTIONS:
 - Identify missing documentation areas
 - Check for outdated documentation
 - Consider end-user and developer documentation needs
+- After you're done with your tasks, respond to the supervisor directly
 
-Git Diff:
-{git_diffs}
-
-Provide a thorough documentation analysis following the DocumentationAnalysisResponse model.""")
+""")
 
 
-def create_tech_lead_agent_prompt():
-    return ChatPromptTemplate.from_template("""You are a tech lead making the final decision on whether to approve this merge.
+def create_tech_lead_supervisor_prompt():
+    return ChatPromptTemplate.from_template("""You are a Tech Lead supervisor managing a team of specialist agents to analyze git diffs before merge approval.
 
-You have received analysis from your team:
+Assign work to one agent at a time, do not call agents in parallel.
+
+You manage these agents:
+- security_agent: Analyzes code for security vulnerabilities and risks
+- architecture_agent: Reviews code structure, design patterns, and maintainability
+- performance_agent: Evaluates performance implications and optimizations
+- documentation_agent: Assesses documentation quality and completeness
+
+SUPERVISOR RESPONSIBILITIES:
+1. Assign the git diff analysis to ALL four agents (security, architecture, performance, documentation)
+2. Assign work to one agent at a time, do not call agents in parallel.
+3. Wait for all agents to complete their analysis
+4. Do not perform any analysis yourself - delegate everything to your team
+5. Once you have all four analysis reports, provide your final tech lead decision
+""")
+
+
+def create_tech_lead_decision_prompt():
+    return ChatPromptTemplate.from_template("""You are a Tech Lead making the final decision on whether to approve this merge.
+
+You have received comprehensive analysis from your specialist team:
 
 SECURITY ANALYSIS:
 {security_analysis}
@@ -136,13 +149,14 @@ DOCUMENTATION ANALYSIS:
 ORIGINAL GIT DIFF:
 {git_diffs}
 
-INSTRUCTIONS:
+TECH LEAD DECISION INSTRUCTIONS:
 - Weigh all expert opinions and findings
 - Consider the overall risk vs benefit
 - Make a final decision: approve, reject, or request changes
-- Prioritize the most critical issues
-- Balance perfectionism with delivery needs
-- Consider the team's current capacity and deadlines
+- Prioritize the most critical issues identified by your team
+- Balance code quality with delivery needs
+- Consider the team's current capacity and technical debt
 - Provide clear reasoning for your decision
+- Highlight the top 3 most important concerns from all analyses
 
-Make your final decision following the TechLeadDecision model.""")
+Provide your final tech lead decision and executive summary.""")

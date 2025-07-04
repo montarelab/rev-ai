@@ -1,10 +1,10 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List, Dict, Any, Literal, TypedDict, Annotated
+from typing import Optional, List, Dict, Any, Literal, TypedDict, Annotated, Sequence
 
 from langchain_core.messages import AIMessage, BaseMessage
-from pydantic import BaseModel, validator, Field
-from pathlib import Path
+from langgraph.graph.message import add_messages
+from pydantic import BaseModel, Field
 
 from views.enums import AgentType, AgentStatus
 
@@ -92,13 +92,16 @@ class EngineerResponse(BaseModel):
     summary: str
 
 
-# LangGraph State - must be TypedDict with Annotated fields for proper message handling
 class CodeReviewState(TypedDict):
     git_diffs: str
-    messages: Annotated[List[BaseMessage], "The messages in the conversation"]
     status: AgentStatus
-    agent_feedbacks: List[AgentFeedback]
+    agent_feedbacks: Dict[AgentType, AgentFeedback]
     final_result: Optional[Dict[str, Any]]
     created_at: datetime
     updated_at: datetime
-    next_agent: Optional[str]  # For routing between agents
+    next_agent: Optional[str]
+    structured_response: Optional[Dict[str, Any]] = None
+
+    messages: Annotated[Sequence[BaseMessage], add_messages]
+    is_last_step: bool
+    remaining_steps: Optional[List[str]]

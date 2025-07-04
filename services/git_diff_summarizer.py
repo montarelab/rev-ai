@@ -49,7 +49,7 @@ class GitDiffSummarizer:
             )
 
             response = await orchestrator.start_review(request)
-            print(f"Review started with task_id: {response.message}")
+            print(f"Response received with message: {response.message}")
 
             # Write output
             # FileWriter.write_summary(self.config.output_file, summary, self.config)
