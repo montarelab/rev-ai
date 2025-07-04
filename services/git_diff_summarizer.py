@@ -3,11 +3,13 @@ import traceback
 
 from loguru import logger as log
 
+from agents.orchestrator import CodeReviewOrchestrator
 from config import Config
 from errors import ValidationError, GitError, OllamaError
 from services.file_writer import FileWriter
 from services.git_manager import GitManager
 from services.summarizer_client import DiffSummarizerClient
+from views.views import CodeReviewRequest
 
 
 class GitDiffSummarizer:
@@ -40,10 +42,17 @@ class GitDiffSummarizer:
             log.info("Fetched Git diff successfully.")
 
             # Generate summary
-            summary = await self.ollama_client.summarize_diff(diff_content)
+            orchestrator = CodeReviewOrchestrator()
+
+            request = CodeReviewRequest(
+                git_diffs=diff_content
+            )
+
+            response = await orchestrator.start_review(request)
+            print(f"Review started with task_id: {response.message}")
 
             # Write output
-            FileWriter.write_summary(self.config.output_file, summary, self.config)
+            # FileWriter.write_summary(self.config.output_file, summary, self.config)
 
             log.info("Git diff summarization completed successfully!")
 
@@ -54,5 +63,3 @@ class GitDiffSummarizer:
             log.error(f"Unexpected error: {e}")
             log.error(f"Traceback: {traceback.format_exc()}")
             sys.exit(1)
-
-
