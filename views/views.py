@@ -22,10 +22,7 @@ class AgentFeedback(BaseModel):
     errors: List[str] = []
 
 
-class CodeReviewResponse(BaseModel):
-    status: AgentStatus
-    message: str
-    estimated_completion_time: Optional[int] = None
+
 
 
 class ReviewResult(BaseModel):
@@ -102,6 +99,20 @@ class CodeReviewState(TypedDict):
     next_agent: Optional[str]
     structured_response: Optional[Dict[str, Any]] = None
 
+    security_analysis: Optional[str]
+    performance_analysis: Optional[str]
+    architecture_analysis: Optional[str]
+    documentation_analysis: Optional[str]
+
+    tech_lead_decision: Optional[TechLeadDecision] = None
+
     messages: Annotated[Sequence[BaseMessage], add_messages]
     is_last_step: bool
     remaining_steps: Optional[List[str]]
+
+
+class CodeReviewResponse(BaseModel):
+    status: AgentStatus
+    message: str
+    estimated_completion_time: Optional[int] = None
+    output: Optional[TechLeadDecision]

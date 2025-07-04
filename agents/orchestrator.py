@@ -77,20 +77,23 @@ class CodeReviewOrchestrator:
                         ]
                     },
             ):
+                pass
             # for chunk in workflow.stream(initial_state):
                 # log_event(event)
 
                 pretty_print_messages(chunk, last_message=True)
 
-
             final_message_history = chunk["supervisor"]["messages"]
             for message in final_message_history:
                 message.pretty_print()
 
+
+            print("Chunk: ", chunk)
             return CodeReviewResponse(
-                status=AgentStatus.IN_PROGRESS,
+                status=AgentStatus.COMPLETED,
                 message="Code review started successfully",
-                estimated_completion_time=self.DEFAULT_ESTIMATED_COMPLETION_TIME
+                estimated_completion_time=self.DEFAULT_ESTIMATED_COMPLETION_TIME,
+                output=chunk["supervisor"]["structured_response"]
             )
 
         except Exception as e:

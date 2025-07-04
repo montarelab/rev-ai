@@ -6,7 +6,7 @@ from loguru import logger as log
 
 from agents.agents import create_documentation_agent, create_architecture_agent, create_performance_agent, \
     create_security_agent, create_tech_lead_agent
-from views.views import AgentType, AgentStatus, AgentFeedback, CodeReviewState
+from views.views import AgentType, AgentStatus, AgentFeedback, CodeReviewState, TechLeadDecision
 
 
 async def security_analysis_node(state: CodeReviewState) -> CodeReviewState:
@@ -26,6 +26,8 @@ async def security_analysis_node(state: CodeReviewState) -> CodeReviewState:
         execution_time = (datetime.now() - start_time).total_seconds()
 
         # Update state
+        state["security_analysis"] = result['messages'][1]
+
         state["agent_feedbacks"][AgentType.SECURITY] = {
             "agent_type": AgentType.SECURITY.value,
             "status": "completed",
@@ -66,6 +68,9 @@ async def performance_analysis_node(state: CodeReviewState) -> CodeReviewState:
         })
 
         execution_time = (datetime.now() - start_time).total_seconds()
+
+        state["performance_analysis"] = result['messages'][1]
+
 
         state["agent_feedbacks"][AgentType.PERFORMANCE] = {
             "agent_type": AgentType.PERFORMANCE.value,
@@ -108,6 +113,8 @@ async def architecture_analysis_node(state: CodeReviewState) -> CodeReviewState:
 
         execution_time = (datetime.now() - start_time).total_seconds()
 
+        state["architecture_analysis"] = result['messages'][1]
+
         state["agent_feedbacks"][AgentType.ARCHITECTURE] = {
             "agent_type": AgentType.ARCHITECTURE.value,
             "status": "completed",
@@ -149,6 +156,8 @@ async def documentation_analysis_node(state: CodeReviewState) -> CodeReviewState
 
         execution_time = (datetime.now() - start_time).total_seconds()
 
+        state["documentation_analysis"] = result['messages'][1]
+
         state["agent_feedbacks"][AgentType.DOCUMENTATION] = {
             "agent_type": AgentType.DOCUMENTATION.value,
             "status": "completed",
@@ -178,7 +187,7 @@ async def tech_lead_review_node(state: CodeReviewState) -> CodeReviewState:
     """Tech lead review and decision node"""
     try:
         start_time = datetime.now()
-        agent = create_tech_lead_agent()
+        agent = create_tech_lead_agent({})
 
         # Prepare feedback summary
         feedback_summary = {
@@ -187,10 +196,15 @@ async def tech_lead_review_node(state: CodeReviewState) -> CodeReviewState:
             if feedback["status"] == "completed"
         }
 
+        final_review = state['security_analysis']
+
+        final_review += "\n\n" + state['performance_analysis']
+        final_review += "\n\n" + state['architecture_analysis']
+        final_review += "\n\n" + state['documentation_analysis']
+
         review_message = HumanMessage(
-            content=f"Review this analysis and decide if changes should be approved or require fixes:\n\n"
-                    f"Original Code:\n{state['code']}\n\n"
-                    f"Expert Analysis:\n{json.dumps(feedback_summary, indent=2, default=str)}"
+            content=f"Review this analysis from experts decide if changes should be approved or require fixes:\n\n"
+                    f"Expert Analysis:\n{final_review}"
         )
 
         print("Tech lead. check state", state)
@@ -206,20 +220,8 @@ async def tech_lead_review_node(state: CodeReviewState) -> CodeReviewState:
         execution_time = (datetime.now() - start_time).total_seconds()
 
         # Simple decision logic - you can make this more sophisticated
-        has_critical_issues = any(
-            feedback.get("data") and
-            feedback.get("data", {}).get("security_score", 100) < 70 or
-            feedback.get("data", {}).get("performance_score", 100) < 70
-            for feedback in state["agent_feedbacks"].values()
-            if feedback.get("status") == "completed"
-        )
 
-        if has_critical_issues:
-            state["status"] = AgentStatus.REJECTED
-            state["next_agent"] = "engineer"
-        else:
-            state["status"] = AgentStatus.APPROVED
-            state["next_agent"] = None
+        state["tech_lead_decision"] = TechLeadDecision(**result["messages"][1])
 
         state["agent_feedbacks"][AgentType.TECH_LEAD] = {
             "agent_type": AgentType.TECH_LEAD.value,

@@ -23,7 +23,6 @@ INSTRUCTIONS:
 - Assess the severity based on exploitability and impact
 - Provide specific line numbers when possible
 - Give actionable recommendations for fixes
-- After you're done with your tasks, respond to the supervisor directly
 
 
 """)
@@ -51,7 +50,6 @@ INSTRUCTIONS:
 - Consider the existing codebase context
 - Identify opportunities for refactoring
 - Rate the overall architectural quality
-- After you're done with your tasks, respond to the supervisor directly
 
 """)
 
@@ -78,7 +76,6 @@ INSTRUCTIONS:
 - Assess scalability implications
 - Consider both CPU and memory performance
 - Provide optimization recommendations
-- After you're done with your tasks, respond to the supervisor directly
 
 """)
 
@@ -104,7 +101,6 @@ INSTRUCTIONS:
 - Identify missing documentation areas
 - Check for outdated documentation
 - Consider end-user and developer documentation needs
-- After you're done with your tasks, respond to the supervisor directly
 
 """)
 
@@ -133,21 +129,6 @@ def create_tech_lead_decision_prompt():
     return ChatPromptTemplate.from_template("""You are a Tech Lead making the final decision on whether to approve this merge.
 
 You have received comprehensive analysis from your specialist team:
-
-SECURITY ANALYSIS:
-{security_analysis}
-
-ARCHITECTURE ANALYSIS:
-{architecture_analysis}
-
-PERFORMANCE ANALYSIS:
-{performance_analysis}
-
-DOCUMENTATION ANALYSIS:
-{documentation_analysis}
-
-ORIGINAL GIT DIFF:
-{git_diffs}
 
 TECH LEAD DECISION INSTRUCTIONS:
 - Weigh all expert opinions and findings

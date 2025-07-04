@@ -52,7 +52,7 @@ class GitDiffSummarizer:
             print(f"Response received with message: {response.message}")
 
             # Write output
-            # FileWriter.write_summary(self.config.output_file, summary, self.config)
+            FileWriter.write_summary(self.config.output_file, response.output, self.config)
 
             log.info("Git diff summarization completed successfully!")
 

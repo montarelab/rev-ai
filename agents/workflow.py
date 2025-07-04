@@ -20,7 +20,7 @@ def create_code_review_workflow(prompt_dict: dict):
     print('created tech lead')
 
     supervisor = (
-        StateGraph(MessagesState)
+        StateGraph(CodeReviewState)
 
         .add_node(tech_lead_agent, destinations=(
             "security_agent", "performance_agent",
@@ -31,12 +31,18 @@ def create_code_review_workflow(prompt_dict: dict):
         .add_node(architecture_agent)
         .add_node(documentation_agent)
 
-        .add_edge(START, "supervisor")
+        .add_edge(START, "security_agent")
+        .add_edge(START, "performance_agent")
+        .add_edge(START, "architecture_agent")
+        .add_edge(START, "documentation_agent")
+
 
         .add_edge("security_agent", "supervisor")
         .add_edge("performance_agent", "supervisor")
         .add_edge("architecture_agent", "supervisor")
         .add_edge("documentation_agent", "supervisor")
+
+        .add_edge("supervisor", END)
 
         .compile()
     )
