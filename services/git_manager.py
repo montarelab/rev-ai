@@ -25,6 +25,7 @@ class GitManager:
         except subprocess.CalledProcessError as e:
             raise GitError(f"Git command failed: {e.stderr}")
 
+
     def validate_branches(self, local_branch: str, master_branch: str):
         """Validate that both branches exist."""
         try:
@@ -52,7 +53,37 @@ class GitManager:
         except Exception as e:
             raise GitError(f"Failed to validate branches: {e}")
 
-    def get_diff(self, local_branch: str, master_branch: str) -> str:
+
+    def get_diff_names_only(self, local_branch: str, master_branch: str) -> str:
+        """Get only names of the diff between two branches."""
+        try:
+            # Fetch latest changes
+            log.info("Fetching latest changes...")
+            self._run_git_command(["fetch", "origin"])
+
+            # Get the diff
+            log.info(f"Getting diff between {master_branch} and {local_branch}...")
+            diff = self._run_git_command([
+                "diff",
+                f"{master_branch}...{local_branch}",
+                "--name-only",
+                "--no-color"
+            ])
+
+            if not diff:
+                log.warning("No differences found between branches")
+                return "No differences found between the specified branches."
+
+            return diff
+
+        except GitError:
+            raise
+        except Exception as e:
+            raise GitError(f"Failed to get diff: {e}")
+
+
+
+    def get_diff_full(self, local_branch: str, master_branch: str) -> str:
         """Get the diff between two branches."""
         try:
             # Fetch latest changes

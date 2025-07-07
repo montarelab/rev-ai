@@ -34,7 +34,7 @@ class GitDiffSummarizer:
             log.info("Validated branches successfully.")
 
             # Get diff
-            diff_content = self.git_manager.get_diff(
+            diff_content = self.git_manager.get_diff_full(
                 self.config.local_branch,
                 self.config.master_branch
             )
