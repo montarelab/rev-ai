@@ -9,9 +9,10 @@ from langgraph.prebuilt import create_react_agent
 from agents.mcp import mcp_client
 from agents.memory import mark_file_reviewed, get_reviewed_files
 from agents.prompts import create_code_review_prompt
-from tools.get_file_size import get_file_content
+from tools.get_file_content import get_file_content
 from tools.regex_file_search import regex_file_search
 from tools.retriever import retriever_tool
+from views.views import CodeReviewOutput
 
 # Import your tools
 
@@ -22,34 +23,27 @@ from dataclasses import dataclass
 
 store = InMemoryStore()
 
-@dataclass
-class CodeReviewOutput(TypedDict):
-    issue_type: str
-    severity: str
-    file_path: str
-    description: str
-    recommendation: str
-    reasoning: str
-
 
 def create_llm():
     """Create and configure LLM instance"""
 
     return ChatVertexAI(
-        model=MODEL,
+        model='gemini-2.0-flash-lite', # todo add automatic fetching from config
         temperature=0
     )
 
 
 async def create_code_review_agent():
+
     mcp_tools = await mcp_client.get_tools()
+
     code_review_agent = create_react_agent(
         create_llm(),
         tools=[
-            regex_file_search,  # my file tools
+            regex_file_search,
             get_file_content,
-            retriever_tool,  # rag tools
-            mark_file_reviewed,  # memory tools
+            retriever_tool,
+            mark_file_reviewed,
             get_reviewed_files
         ],
         # + mcp_tools, todo: add mcp tools later

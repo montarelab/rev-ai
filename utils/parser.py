@@ -32,13 +32,13 @@ Examples:
     )
 
     parser.add_argument(
-        "local_branch",
+        "source_branch",
         nargs='?',
         help="Name of the local/feature branch to compare (required for diff analysis)"
     )
 
     parser.add_argument(
-        "master_branch",
+        "target_branch",
         nargs='?',
         help="Name of the master/base branch to compare against (required for diff analysis)",
     )

@@ -3,17 +3,18 @@ import uuid
 from queue import Queue
 
 from agents.agents import create_code_review_agent, summarize_review_result
-from views.views import CodeReviewResponse, CodeReviewRequest
-
+from config import Config
+from views.views import CodeReviewRequest
+from loguru import logger as log
 
 class CodeReviewOrchestrator:
     """Main orchestrator for code review workflow"""
 
-    DEFAULT_ESTIMATED_COMPLETION_TIME = 300 # 5 minutes
 
-    def __init__(self):
+    def __init__(self, config: Config):
         self.raw_messages = Queue()
         self.structured_messages = Queue()
+        self.config = config
 
     async def _start_analyzing(self, agent, content, task_id):
         messages = await agent.ainvoke(
@@ -28,7 +29,9 @@ class CodeReviewOrchestrator:
                 "config": {
                     "configurable": {  # config for memory
                         "task_id": task_id
-                    }
+                    },
+                    "app_config": self.config
+
                 }
 
             }
@@ -49,7 +52,7 @@ class CodeReviewOrchestrator:
             asyncio.TaskGroup() as tg
         ):
 
-            print("Created task group.")
+            log.info("Created task group.")
 
             for changed_file in request.changed_files:
 
@@ -63,9 +66,9 @@ class CodeReviewOrchestrator:
                     task_id=task_id
                 ))
 
-                print(f"Task for file {changed_file.file_path} started")
+                log.info(f"Task for file {changed_file.file_path} started")
 
-        print('Agents finished the tasks!')
+        log.info('Agents finished the tasks!')
 
         return await summarize_review_result(self.structured_messages)
         # try:
@@ -84,14 +87,14 @@ class CodeReviewOrchestrator:
         #     ):
         #         pass
         #
-        #         pretty_print_messages(chunk, last_message=True)
+        #         pretty_log.info_messages(chunk, last_message=True)
         #
         #     final_message_history = chunk["supervisor"]["messages"]
         #     for message in final_message_history:
-        #         message.pretty_print()
+        #         message.pretty_log.info()
         #
         #
-        #     print("Chunk: ", chunk)
+        #     log.info("Chunk: ", chunk)
         #     return CodeReviewResponse(
         #         status=AgentStatus.COMPLETED,
         #         message="Code review started successfully",

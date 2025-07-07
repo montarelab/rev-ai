@@ -11,6 +11,7 @@ class GitManager:
     def __init__(self, project_path: Path):
         self.project_path = project_path
 
+
     def _run_git_command(self, args: list) -> str:
         """Run a Git command and return its output."""
         try:
@@ -26,27 +27,27 @@ class GitManager:
             raise GitError(f"Git command failed: {e.stderr}")
 
 
-    def validate_branches(self, local_branch: str, master_branch: str):
+    def validate_branches(self, source_branch: str, target_branch: str):
         """Validate that both branches exist."""
         try:
             # Check if branches exist
             branches = self._run_git_command(["branch", "-a"])
 
             local_exists = any(
-                local_branch in line.strip().replace("* ", "")
+                source_branch in line.strip().replace("* ", "")
                 for line in branches.split('\n')
             )
 
             master_exists = any(
-                master_branch in line.strip().replace("* ", "")
+                target_branch in line.strip().replace("* ", "")
                 for line in branches.split('\n')
             )
 
             if not local_exists:
-                raise GitError(f"Local branch '{local_branch}' does not exist")
+                raise GitError(f"Local branch '{source_branch}' does not exist")
 
             if not master_exists:
-                raise GitError(f"Master branch '{master_branch}' does not exist")
+                raise GitError(f"Master branch '{target_branch}' does not exist")
 
         except GitError:
             raise
@@ -54,21 +55,19 @@ class GitManager:
             raise GitError(f"Failed to validate branches: {e}")
 
 
-    def get_diff_for_file(self, file_path, local_branch: str, master_branch: str) -> str:
+    def get_diff_for_file(self, file_path, source_branch: str, target_branch: str) -> str:
         """Get only names of the diff between two branches."""
 
-        full_file_path = project_path / file_path
+        full_file_path = self.project_path / file_path
 
         try:
-            # Fetch latest changes
             log.info("Fetching latest changes...")
             self._run_git_command(["fetch", "origin"])
 
-            # Get the diff
-            log.info(f"Getting diff between {master_branch} and {local_branch}...")
+            log.info(f"Getting diff between {target_branch} and {source_branch}...")
             diff = self._run_git_command([
                 "diff",
-                f"{master_branch}...{local_branch}",
+                f"{target_branch}...{source_branch}",
                 '--',
                 full_file_path,
                 "--no-color",
@@ -86,18 +85,16 @@ class GitManager:
             raise GitError(f"Failed to get diff: {e}")
 
 
-    def get_diff_names_only(self, local_branch: str, master_branch: str) -> str:
+    def get_diff_names_only(self, source_branch: str, target_branch: str) -> str:
         """Get only names of the diff between two branches."""
         try:
-            # Fetch latest changes
             log.info("Fetching latest changes...")
             self._run_git_command(["fetch", "origin"])
 
-            # Get the diff
-            log.info(f"Getting diff between {master_branch} and {local_branch}...")
+            log.info(f"Getting diff between {target_branch} and {source_branch}...")
             diff = self._run_git_command([
                 "diff",
-                f"{master_branch}...{local_branch}",
+                f"{target_branch}...{source_branch}",
                 "--name-only",
                 "--no-color"
             ])
@@ -115,18 +112,16 @@ class GitManager:
 
 
 
-    def get_diff_full(self, local_branch: str, master_branch: str) -> str:
+    def get_diff_full(self, source_branch: str, target_branch: str) -> str:
         """Get the diff between two branches."""
         try:
-            # Fetch latest changes
             log.info("Fetching latest changes...")
             self._run_git_command(["fetch", "origin"])
 
-            # Get the diff
-            log.info(f"Getting diff between {master_branch} and {local_branch}...")
+            log.info(f"Getting diff between {target_branch} and {source_branch}...")
             diff = self._run_git_command([
                 "diff",
-                f"{master_branch}...{local_branch}",
+                f"{target_branch}...{source_branch}",
                 "--no-color"
             ])
 

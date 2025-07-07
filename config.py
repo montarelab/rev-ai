@@ -6,9 +6,10 @@ from pathlib import Path
 class Config:
     """Configuration for the Git diff summarizer."""
     project_path: Path
-    local_branch: str
-    master_branch: str
+    source_branch: str
+    target_branch: str
     output_file: Path
     ollama_model: str = "llama3.2"
     ollama_url: str = "http://localhost:11434"
+
 

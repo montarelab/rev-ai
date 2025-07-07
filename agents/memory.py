@@ -2,8 +2,6 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.config import get_store
 from typing_extensions import TypedDict
-from langgraph.store.memory import InMemoryStore
-
 
 
 class ReviewedFile(TypedDict):
@@ -50,4 +48,4 @@ def get_reviewed_files(config: RunnableConfig) -> list[str]:
 
     task_id = config["configurable"].get("task_id")  # get task id from agent
 
-    store.get(("reviewed_files",), task_id).value
+    return store.get(("reviewed_files",), task_id).value

@@ -1,12 +1,7 @@
-from datetime import datetime
-from enum import Enum
-from typing import Optional, List, Dict, Any, Literal, TypedDict, Annotated, Sequence
+from dataclasses import dataclass
+from typing import Optional, List, TypedDict
 
-from langchain_core.messages import AIMessage, BaseMessage
-from langgraph.graph.message import add_messages
-from pydantic import BaseModel, Field
-
-from views.enums import AgentType, AgentStatus
+from pydantic import BaseModel
 
 
 class ChangedFile(BaseModel):
@@ -18,107 +13,11 @@ class CodeReviewRequest(BaseModel):
     changed_files: List[ChangedFile]
 
 
-
-class AgentFeedback(BaseModel):
-    agent_type: AgentType
-    status: AgentStatus
-    data: AIMessage
-    timestamp: datetime
-    execution_time: float
-    errors: List[str] = []
-
-
-
-
-
-class ReviewResult(BaseModel):
-    status: AgentStatus
-    original_git_diffs: str
-    agent_feedback: AgentFeedback
-    summary: Dict[str, Any]
-    created_at: datetime
-    completed_at: Optional[datetime] = None
-    execution_time: Optional[float] = None
-
-
-class Severity(str, Enum):
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-class Issue(BaseModel):
-    type: str
-    severity: Severity
+@dataclass
+class CodeReviewOutput(TypedDict):
+    issue_type: str
+    severity: str
     file_path: str
     description: str
     recommendation: str
-
-
-class AgentAnalysisResponse(BaseModel):
-    score: int = Field(ge=0, le=100)
-    issues: List[Issue]
-    merge_recommendation: Literal["approve", "reject", "conditional"]
-
-
-class SecurityAnalysisResponse(AgentAnalysisResponse):
-    pass
-
-
-class ArchitectureAnalysisResponse(AgentAnalysisResponse):
-    pass
-
-
-class PerformanceAnalysisResponse(AgentAnalysisResponse):
-    pass
-
-
-class DocumentationAnalysisResponse(AgentAnalysisResponse):
-    pass
-
-
-class TechLeadDecision(BaseModel):
-    final_decision: Literal["approve", "reject", "request_changes"]
     reasoning: str
-    priority_issues: List[str]
-
-
-class CodeFix(BaseModel):
-    file_path: str
-    fixed_code: str
-    explanation: str
-
-
-class EngineerResponse(BaseModel):
-    fixes_implemented: List[CodeFix]
-    summary: str
-
-
-class CodeReviewState(TypedDict):
-    git_diffs: str
-    status: AgentStatus
-    agent_feedbacks: Dict[AgentType, AgentFeedback]
-    final_result: Optional[Dict[str, Any]]
-    created_at: datetime
-    updated_at: datetime
-    next_agent: Optional[str]
-    structured_response: Optional[Dict[str, Any]] = None
-
-    security_analysis: Optional[str]
-    performance_analysis: Optional[str]
-    architecture_analysis: Optional[str]
-    documentation_analysis: Optional[str]
-
-    tech_lead_decision: Optional[TechLeadDecision] = None
-
-    messages: Annotated[Sequence[BaseMessage], add_messages]
-    is_last_step: bool
-    remaining_steps: Optional[List[str]]
-
-
-class CodeReviewResponse(BaseModel):
-    status: AgentStatus
-    message: str
-    estimated_completion_time: Optional[int] = None
-    output: Optional[TechLeadDecision]

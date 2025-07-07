@@ -46,24 +46,24 @@ async def main():
             return
 
         # Validate required arguments for diff analysis mode
-        if not all([args.project_path, args.local_branch, args.master_branch, args.output_file]):
-            parser.error("project_path, local_branch, master_branch, and output_file are required for direct diff analysis mode. Use --interactive for guided mode.")
+        if not all([args.project_path, args.source_branch, args.target_branch, args.output_file]):
+            parser.error("project_path, source_branch, target_branch, and output_file are required for direct diff analysis mode. Use --interactive for guided mode.")
 
         # Validate inputs for diff analysis
         log.info("Validating inputs...")
         InputValidator.check_git_availability()
-        InputValidator.check_ollama_availability(args.ollama_url)
+        # InputValidator.check_ollama_availability(args.ollama_url)
 
         project_path = InputValidator.validate_project_path(args.project_path)
         output_file = InputValidator.validate_output_file(args.output_file)
-        local_branch = InputValidator.validate_branch_name(args.local_branch)
-        master_branch = InputValidator.validate_branch_name(args.master_branch)
+        source_branch = InputValidator.validate_branch_name(args.source_branch)
+        target_branch = InputValidator.validate_branch_name(args.target_branch)
 
         # Create configuration
         config = Config(
             project_path=project_path,
-            local_branch=local_branch,
-            master_branch=master_branch,
+            source_branch=source_branch,
+            target_branch=target_branch,
             output_file=output_file,
             ollama_model=args.model,
             ollama_url=args.ollama_url

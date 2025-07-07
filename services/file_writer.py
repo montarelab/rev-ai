@@ -33,8 +33,8 @@ class FileWriter:
 {separator}
 
 - **Project Path**: {config.project_path}
-- **Local Branch**: {config.local_branch}
-- **Master Branch**: {config.master_branch}
+- **Local Branch**: {config.source_branch}
+- **Master Branch**: {config.target_branch}
 - **AI Model**: {config.ollama_model}
 - **Generated**: {__import__('datetime').datetime.now().isoformat()}
 

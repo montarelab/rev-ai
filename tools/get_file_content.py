@@ -16,10 +16,6 @@ def get_file_content(file_path: str):
         str: Full contents of the file.
     """
     path_obj = Path(file_path)
-    if path_obj.is_absolute():
-        full_file_path = path_obj
-    else:
-        full_file_path = project_path / path_obj
 
-    with open(full_file_path, "r", encoding="utf-8") as f:
+    with open(path_obj, "r", encoding="utf-8") as f:
         return f.read()

@@ -11,14 +11,14 @@ from services.input_validator import InputValidator
 
 
 @tool
-async def analyze_git_diff(project_path: str, local_branch: str, master_branch: str, output_file: str, model: str = "llama3.2", ollama_url: str = "http://localhost:11434") -> str:
+async def analyze_git_diff(project_path: str, source_branch: str, target_branch: str, output_file: str, model: str = "llama3.2", ollama_url: str = "http://localhost:11434") -> str:
     """
     Run a complete Git diff analysis using the GitDiffSummarizer.
     
     Args:
         project_path: Path to the Git project directory
-        local_branch: Name of the local/feature branch to compare
-        master_branch: Name of the master/base branch to compare against
+        source_branch: Name of the local/feature branch to compare
+        target_branch: Name of the master/base branch to compare against
         output_file: Path to the output file for the summary
         model: Ollama model to use (default: llama3.2)
         ollama_url: Ollama server URL (default: http://localhost:11434)
@@ -33,13 +33,13 @@ async def analyze_git_diff(project_path: str, local_branch: str, master_branch: 
 
         project_path = InputValidator.validate_project_path(project_path)
         output_file = InputValidator.validate_output_file(output_file)
-        local_branch = InputValidator.validate_branch_name(local_branch)
-        master_branch = InputValidator.validate_branch_name(master_branch)
+        source_branch = InputValidator.validate_branch_name(source_branch)
+        target_branch = InputValidator.validate_branch_name(target_branch)
 
         config = Config(
             project_path=project_path,
-            local_branch=local_branch,
-            master_branch=master_branch,
+            source_branch=source_branch,
+            target_branch=target_branch,
             output_file=output_file,
             ollama_model=model,
             ollama_url=ollama_url
@@ -102,7 +102,7 @@ class GitDiffChat:
         # Track information gathering state
         self.session_data = {
             "project_path": None,
-            "local_branch": None,
+            "source_branch": None,
             "target_branch": None,
             "output_file": None
         }
