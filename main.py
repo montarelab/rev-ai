@@ -1,17 +1,17 @@
-import argparse
 import asyncio
 import os
 import sys
 
 import pyfiglet
+from dotenv import load_dotenv
 from loguru import logger as log
 
 from config import Config
 from errors import ValidationError
+from services.git_chat import GitDiffChat
 from services.git_diff_summarizer import GitDiffSummarizer
 from services.input_validator import InputValidator
-from services.git_chat import GitDiffChat
-from dotenv import load_dotenv
+from utils.parser import create_parser
 
 load_dotenv()
 
@@ -21,74 +21,6 @@ logs_dir = os.getenv("LOGS_DIR")
 os.makedirs(logs_dir, exist_ok=True)
 log.add(f"{logs_dir}/app.log", rotation="1 MB", retention="10 days", level="DEBUG")
 
-
-def create_parser() -> argparse.ArgumentParser:
-    """Create and configure the argument parser."""
-    parser = argparse.ArgumentParser(
-        description="AI-powered Git diff analysis with direct and interactive modes",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Direct Git Diff Analysis:
-  %(prog)s /path/to/project feature-branch main output.md
-  %(prog)s ./my-project develop master summary.txt --model llama3.2
-  %(prog)s ~/projects/app feature origin/main report.md --ollama-url http://localhost:11434
-
-  # Interactive Chat Mode:
-  %(prog)s --interactive
-  %(prog)s --interactive --model llama3.2 --ollama-url http://localhost:11434
-        """
-    )
-
-    parser.add_argument(
-        "--interactive", "-i",
-        action="store_true",
-        help="Start interactive mode for guided git diff analysis"
-    )
-
-    parser.add_argument(
-        "project_path",
-        nargs='?',
-        help="Path to the Git project directory (required for direct diff analysis)"
-    )
-
-    parser.add_argument(
-        "local_branch",
-        nargs='?',
-        help="Name of the local/feature branch to compare (required for diff analysis)"
-    )
-
-    parser.add_argument(
-        "master_branch",
-        nargs='?',
-        help="Name of the master/base branch to compare against (required for diff analysis)",
-    )
-
-    parser.add_argument(
-        "output_file",
-        nargs='?',
-        help="Path to the output file for the summary (required for diff analysis)"
-    )
-
-    parser.add_argument(
-        "--model",
-        default="llama3.2",
-        help="Ollama model to use for summarization (default: llama3.2)"
-    )
-
-    parser.add_argument(
-        "--ollama-url",
-        default="http://localhost:11434",
-        help="Ollama server URL (default: http://localhost:11434)"
-    )
-
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose logging"
-    )
-
-    return parser
 
 
 

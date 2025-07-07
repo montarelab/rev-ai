@@ -9,8 +9,14 @@ from pydantic import BaseModel, Field
 from views.enums import AgentType, AgentStatus
 
 
+class ChangedFile(BaseModel):
+    file_path: str
+    content: str
+    changes: Optional[str] = None
+
 class CodeReviewRequest(BaseModel):
-    git_diffs: str = Field(..., description="Differences of code", min_length=1)
+    changed_files: List[ChangedFile]
+
 
 
 class AgentFeedback(BaseModel):

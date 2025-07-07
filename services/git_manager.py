@@ -54,6 +54,38 @@ class GitManager:
             raise GitError(f"Failed to validate branches: {e}")
 
 
+    def get_diff_for_file(self, file_path, local_branch: str, master_branch: str) -> str:
+        """Get only names of the diff between two branches."""
+
+        full_file_path = project_path / file_path
+
+        try:
+            # Fetch latest changes
+            log.info("Fetching latest changes...")
+            self._run_git_command(["fetch", "origin"])
+
+            # Get the diff
+            log.info(f"Getting diff between {master_branch} and {local_branch}...")
+            diff = self._run_git_command([
+                "diff",
+                f"{master_branch}...{local_branch}",
+                '--',
+                full_file_path,
+                "--no-color",
+            ])
+
+            if not diff:
+                log.warning("No differences found between branches")
+                return "No differences found between the specified branches."
+
+            return diff
+
+        except GitError:
+            raise
+        except Exception as e:
+            raise GitError(f"Failed to get diff: {e}")
+
+
     def get_diff_names_only(self, local_branch: str, master_branch: str) -> str:
         """Get only names of the diff between two branches."""
         try:

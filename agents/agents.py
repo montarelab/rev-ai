@@ -1,105 +1,85 @@
-from langchain_ollama import ChatOllama
-from langgraph.prebuilt import create_react_agent
-from langgraph_supervisor import create_handoff_tool
+import json
+from asyncio import Queue
+from typing import TypedDict
 
-from agents.prompts import *
+from langchain_core.stores import InMemoryStore
+from langchain_google_vertexai import ChatVertexAI
+from langgraph.prebuilt import create_react_agent
+
+from agents.mcp import mcp_client
+from agents.memory import mark_file_reviewed, get_reviewed_files
+from agents.prompts import create_code_review_prompt
+from tools.get_file_size import get_file_content
+from tools.regex_file_search import regex_file_search
+from tools.retriever import retriever_tool
+
 # Import your tools
-from views.views import TechLeadDecision
 
 DEBUG = False
 
 
+from dataclasses import dataclass
+
+store = InMemoryStore()
+
+@dataclass
+class CodeReviewOutput(TypedDict):
+    issue_type: str
+    severity: str
+    file_path: str
+    description: str
+    recommendation: str
+    reasoning: str
+
+
 def create_llm():
     """Create and configure LLM instance"""
-    return ChatOllama(
-        model="llama3.2",
-        temperature=0,
-        timeout=300,  # 5 minutes timeout
-        num_predict=2048,
-        debug=DEBUG
+
+    return ChatVertexAI(
+        model=MODEL,
+        temperature=0
     )
 
 
-def create_security_agent(prompt_dict: dict):
-    """Create security analysis agent"""
-    return create_react_agent(
+async def create_code_review_agent():
+    mcp_tools = await mcp_client.get_tools()
+    code_review_agent = create_react_agent(
         create_llm(),
-        tools=[],
-        name="security_agent",
-        # response_format=SecurityAnalysisResponse,
-        prompt=create_security_agent_prompt().invoke(prompt_dict).to_string(),
-        debug=DEBUG,
+        tools=[
+            regex_file_search,  # my file tools
+            get_file_content,
+            retriever_tool,  # rag tools
+            mark_file_reviewed,  # memory tools
+            get_reviewed_files
+        ],
+        # + mcp_tools, todo: add mcp tools later
+
+        store=store,
+        response_format=CodeReviewOutput,
+        name='code_reviewer',
+        prompt=create_code_review_prompt()
     )
 
-
-def create_architecture_agent(prompt_dict: dict):
-    """Create architecture analysis agent"""
-    return create_react_agent(
-        create_llm(),
-        # response_format=ArchitectureAnalysisResponse,
-        tools=[],
-        name="architecture_agent",
-        prompt=create_architecture_agent_prompt().invoke(prompt_dict).to_string(),
-        debug=DEBUG,
-    )
+    return code_review_agent
 
 
-def create_performance_agent(prompt_dict: dict):
-    """Create performance analysis agent"""
-    return create_react_agent(
-        create_llm(),
-        tools=[],
-        name="performance_agent",
-        # response_format=PerformanceAnalysisResponse,
-        prompt=create_performance_agent_prompt().invoke(prompt_dict).to_string(),
-        debug=DEBUG,
-    )
 
+async def summarize_review_result(
+    structured_messages_queue: Queue,
+) -> str:
 
-def create_documentation_agent(prompt_dict: dict):
-    """Create documentation analysis agent"""
-    return create_react_agent(
-        create_llm(),
-        tools=[],
-        name="documentation_agent",
-        # response_format=DocumentationAnalysisResponse,
-        prompt=create_documentation_agent_prompt().invoke(prompt_dict).to_string(),
-        debug=DEBUG,
-    )
+    local_structured_messages = []
 
+    while not structured_messages_queue.empty():
+        message = structured_messages_queue.get()
+        local_structured_messages.append(message)
+        print("Structured Message: ", message)
 
-assign_to_security_agent = create_handoff_tool(
-    agent_name="security_agent",
-    description="Assign task to a security agent.",
-)
+    messages_str = json.dumps(local_structured_messages)
 
-assign_to_performance_agent = create_handoff_tool(
-    agent_name="performance_agent",
-    description="Assign task to a performance agent.",
-)
+    summarizer = create_llm()
 
-assign_to_architecture_agent = create_handoff_tool(
-    agent_name="architecture_agent",
-    description="Assign task to a architecture agent.",
-)
+    summary = await summarizer.ainvoke(
+        "Summarize the changes and give the output: " + messages_str)
 
-assign_to_documentation_agent = create_handoff_tool(
-    agent_name="documentation_agent",
-    description="Assign task to a documentation agent.",
-)
-
-
-def create_tech_lead_agent(prompt_dict: dict):
-    """Create tech lead decision agent"""
-    tech_lead_prompt = create_tech_lead_decision_prompt().invoke(prompt_dict).to_string()
-    agent = create_react_agent(
-        create_llm(),
-        tools=[],
-        response_format=TechLeadDecision,
-        name="supervisor",
-        prompt=tech_lead_prompt,
-
-        debug=DEBUG,
-    )
-
-    return agent
+    return summary.content

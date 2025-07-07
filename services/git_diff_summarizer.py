@@ -9,8 +9,8 @@ from errors import ValidationError, GitError, OllamaError
 from services.file_writer import FileWriter
 from services.git_manager import GitManager
 from services.summarizer_client import DiffSummarizerClient
-from views.views import CodeReviewRequest
-
+from views.views import CodeReviewRequest, ChangedFile
+from tools.get_file_size import get_file_content
 
 class GitDiffSummarizer:
     """Main application class that orchestrates the diff summarization process."""
@@ -33,26 +33,18 @@ class GitDiffSummarizer:
 
             log.info("Validated branches successfully.")
 
-            # Get diff
-            diff_content = self.git_manager.get_diff_full(
-                self.config.local_branch,
-                self.config.master_branch
-            )
-
             log.info("Fetched Git diff successfully.")
 
-            # Generate summary
             orchestrator = CodeReviewOrchestrator()
 
-            request = CodeReviewRequest(
-                git_diffs=diff_content
-            )
+            request = self.create_request()
 
-            response = await orchestrator.start_review(request)
-            print(f"Response received with message: {response.message}")
+            response = await orchestrator.review_code(request)
+
+            print(f"Response received with message: {response}")
 
             # Write output
-            FileWriter.write_summary(self.config.output_file, response.output, self.config)
+            FileWriter.write_summary(self.config.output_file, response, self.config)
 
             log.info("Git diff summarization completed successfully!")
 
@@ -63,3 +55,27 @@ class GitDiffSummarizer:
             log.error(f"Unexpected error: {e}")
             log.error(f"Traceback: {traceback.format_exc()}")
             sys.exit(1)
+
+    def create_request(self):
+        changed_files = []
+
+        changed_file_paths = self.git_manager.get_diff_names_only(
+            self.config.local_branch, self.config.master_branch)
+
+        for file_path in changed_file_paths:
+            changes = self.git_manager.get_diff_for_file(
+                file_path, self.config.local_branch, self.config.master_branch)
+
+            content = get_file_content.invoke(file_path)
+
+            changed_files.append(ChangedFile(
+                content=content,
+                file_path=file_path,
+                changes=changes
+            ))
+
+        request = CodeReviewRequest(
+            changed_files=changed_files
+        )
+
+        return request
