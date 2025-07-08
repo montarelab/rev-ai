@@ -2,6 +2,7 @@ import asyncio
 import os
 import sys
 import uuid
+from pathlib import Path
 
 import pyfiglet
 from loguru import logger as log
@@ -45,6 +46,9 @@ async def main():
 
             api_key = env_key
 
+        vector_db_path = Path('knowledge_db').resolve()
+        if not vector_db_path.exists():
+            raise ValidationError(f"Vector DB path does not exist: {vector_db_path}")
 
         config = Config(
             project_path=project_path,
@@ -56,6 +60,8 @@ async def main():
             model_name=args.model,
             embedding_model=args.embedding_model,
             api_key=api_key,
+            vector_db_path=str(vector_db_path),
+            vector_db_collection_name="knowledge_base"
         )
 
         # Run the summarizer

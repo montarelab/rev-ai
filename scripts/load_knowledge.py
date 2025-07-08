@@ -11,7 +11,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from loguru import logger as log
 
-DATA_DIR = Path("data")
+DATA_DIR = Path("dummy_knowledge")
 DB_DIR = Path("knowledge_db") 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
@@ -43,7 +43,7 @@ class MarkdownKnowledgeETL:
         )
     
     def extract_markdown_files(self) -> List[Document]:
-        """Extract all markdown files from the data directory."""
+        """Extract all markdown files from the dummy_knowledge directory."""
         log.info(f"Extracting markdown files from {self.data_dir}")
         
         if not self.data_dir.exists():
@@ -174,7 +174,7 @@ class MarkdownKnowledgeETL:
             extracted_docs = self.extract_markdown_files()
 
             chunks = self.transform_documents(extracted_docs)
-            
+
             vectorstore = self.load_to_chromadb(chunks)
             
             collection = vectorstore.get()
@@ -215,9 +215,12 @@ def pretty_print_results(result: Dict[str, Any]):
         log.success(f"Total chunks in database: {result['total_chunks_in_db']}")
         log.success(f"Duration: {result['duration_seconds']:.2f}s")
         log.success(f"Database location: {result['database_path']}")
-    else:
-        log.critical(f"ETL failed: {result['error']}")
-        exit(1)
+        return
+
+    log.critical(f"ETL failed: {result['error']}")
+    print("Full result:")
+    print(result)
+    exit(1)
 
 def main():
     """Main entry point for the ETL script."""

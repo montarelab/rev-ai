@@ -21,7 +21,8 @@ def get_retriever_tool_description():
 def get_retriever_tool(config: Config) -> Tool:
 
     vectorstore = Chroma(
-        collection_name="knowledge_base",
+        collection_name=config.vector_db_collection_name,
+        persist_directory=config.vector_db_path,
         embedding_function=OpenAIEmbeddings(
             model=config.embedding_model,
             api_key=config.api_key

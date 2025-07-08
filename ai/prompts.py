@@ -90,7 +90,7 @@ Respond with a **structured list of issues**, one object per issue in the follow
   {
     "issue_type": "Cross-File Consistency",
     "severity": "Medium",
-    "file_path": "api/routes/data.py",
+    "file_path": "api/routes/dummy_knowledge.py",
     "description": "The renamed function `fetch_user_profile_v2` is still being referenced as `fetch_user_profile` elsewhere.",
     "recommendation": "Update all references to use `fetch_user_profile_v2`, or alias the function to preserve backward compatibility."
   }

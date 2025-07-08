@@ -14,5 +14,7 @@ class Config:
     model_name: str
     embedding_model: str
     api_key: str
+    vector_db_path: str
+    vector_db_collection_name: str
 
 

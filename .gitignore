@@ -5,5 +5,4 @@ __pycache__
 .ipynb_checkpoints
 .idea
 logs
-data
 knowledge_db
