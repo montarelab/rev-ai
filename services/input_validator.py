@@ -1,9 +1,6 @@
-import subprocess
 from pathlib import Path
 
-import requests
-
-from errors import ValidationError
+from utils.errors import ValidationError
 
 
 class InputValidator:
@@ -12,7 +9,7 @@ class InputValidator:
     @staticmethod
     def validate_project_path(path: str) -> Path:
         """Validate that the project path exists and is a Git repository."""
-        project_path = Path(path).resolve()
+        project_path = Path(path).expanduser().resolve()
 
         if not project_path.exists():
             raise ValidationError(f"Project path does not exist: {path}")
@@ -29,7 +26,7 @@ class InputValidator:
     @staticmethod
     def validate_output_file(path: str) -> Path:
         """Validate output file path and ensure parent directory exists."""
-        output_path = Path(path).resolve()
+        output_path = Path(path).expanduser().resolve()
 
         # Create parent directory if it doesn't exist
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -48,26 +45,3 @@ class InputValidator:
             raise ValidationError(f"Invalid branch name: {branch}")
 
         return branch.strip()
-
-    @staticmethod
-    def check_git_availability():
-        """Check if Git is available in the system."""
-        try:
-            subprocess.run(
-                ["git", "--version"],
-                check=True,
-                capture_output=True,
-                text=True
-            )
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            raise ValidationError("Git is not installed or not available in PATH")
-
-    @staticmethod
-    def check_ollama_availability(url: str):
-        """Check if Ollama is running and accessible."""
-        try:
-            response = requests.get(f"{url}/api/tags", timeout=5)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            raise ValidationError(f"Ollama is not accessible at {url}: {e}")
-

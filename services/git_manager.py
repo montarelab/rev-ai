@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from errors import GitError
+from utils.errors import GitError
 from loguru import logger as log
 
 
@@ -64,7 +64,7 @@ class GitManager:
             log.info("Fetching latest changes...")
             self._run_git_command(["fetch", "origin"])
 
-            log.info(f"Getting diff between {target_branch} and {source_branch}...")
+            log.info(f"Getting diff in file {file_path} between {target_branch} and {source_branch}...")
             diff = self._run_git_command([
                 "diff",
                 f"{target_branch}...{source_branch}",
@@ -91,7 +91,7 @@ class GitManager:
             log.info("Fetching latest changes...")
             self._run_git_command(["fetch", "origin"])
 
-            log.info(f"Getting diff between {target_branch} and {source_branch}...")
+            log.info(f"Getting changed files between {target_branch} and {source_branch}...")
             diff = self._run_git_command([
                 "diff",
                 f"{target_branch}...{source_branch}",

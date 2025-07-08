@@ -25,17 +25,8 @@ def regex_file_search(query: str, lines_of_code: int, config: RunnableConfig):
     if lines_of_code:
         args.append(f'-C{lines_of_code}')
 
-    try:
-        configurable = config["configurable"]
-        project_path = configurable.get("project_path")  # get task id from agent
-    except BaseException as e:
-        print("Config issue:")
-        print(config)
-        # print("Keys at config:", config.keys())
-        # print("Keys at configurable:", config["configurable"].keys())
-        # print("Full config: ", config)
-
-
+    configurable = config["configurable"]
+    project_path = configurable.get("project_path")
     args.append(project_path)
 
     result = subprocess.run(

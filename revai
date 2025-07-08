@@ -1,3 +1,7 @@
 #!/bin/bash
-#python main.py "$@"
-python main.py ~/projects/mini-tasker/ feature/task-crud main output.md
+python main.py \
+  --project_path=~/projects/mini-tasker/ \
+  --source_branch=feature/task-crud \
+  --target_branch=main \
+  --output_file output.md
+

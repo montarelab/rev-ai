@@ -4,23 +4,17 @@ import sys
 import uuid
 
 import pyfiglet
-# from dotenv import load_dotenv
 from loguru import logger as log
 
 from config import Config
-from errors import ValidationError
-from services.git_diff_summarizer import GitDiffSummarizer
+from utils.errors import ValidationError
+from services.code_diff_analyzer import CodeDiffAnalyzer
 from services.input_validator import InputValidator
 from utils.parser import create_parser
-
-# load_dotenv()
-
 
 logs_dir = os.getenv("LOGS_DIR")
 os.makedirs(logs_dir, exist_ok=True)
 log.add(f"{logs_dir}/app.log", rotation="1 MB", retention="10 days", level="DEBUG")
-
-
 
 
 async def main():
@@ -32,32 +26,40 @@ async def main():
 
     try:
         if not all([args.project_path, args.source_branch, args.target_branch, args.output_file]):
-            parser.error("project_path, source_branch, target_branch, and output_file are required for direct diff analysis mode.")
+            parser.error(
+                "project_path, source_branch, target_branch, and output_file are required for direct diff analysis mode.")
 
-        # Validate inputs for diff analysis
         log.info("Validating inputs...")
-        InputValidator.check_git_availability()
-        # InputValidator.check_ollama_availability(args.ollama_url)
-
         project_path = InputValidator.validate_project_path(args.project_path)
         output_file = InputValidator.validate_output_file(args.output_file)
         source_branch = InputValidator.validate_branch_name(args.source_branch)
         target_branch = InputValidator.validate_branch_name(args.target_branch)
 
         # Create configuration
+
+        api_key = args.api_key
+        if not api_key:
+            env_key = os.getenv("OPENAI_API_KEY")
+            if not env_key:
+                raise ValidationError("API key is required. Set it using --api_key or the OPENAI_API_KEY environment variable.")
+
+            api_key = env_key
+
+
         config = Config(
             project_path=project_path,
             source_branch=source_branch,
             target_branch=target_branch,
             output_file=output_file,
-            ollama_model=args.model,
-            ollama_url=args.ollama_url,
             task_id=str(uuid.uuid4()),
-            thread_id=str(uuid.uuid4())
+            thread_id=str(uuid.uuid4()),
+            model_name=args.model,
+            embedding_model=args.embedding_model,
+            api_key=api_key,
         )
 
         # Run the summarizer
-        summarizer = GitDiffSummarizer(config)
+        summarizer = CodeDiffAnalyzer(config)
         await summarizer.run()
 
     except ValidationError as e:

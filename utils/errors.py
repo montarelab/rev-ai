@@ -7,7 +7,3 @@ class GitError(Exception):
     """Raised when Git operations fail."""
     pass
 
-
-class OllamaError(Exception):
-    """Raised when Ollama operations fail."""
-    pass

@@ -16,7 +16,7 @@ class FileWriter:
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(content)
 
-            log.info(f"Summary written to: {output_path}")
+            log.info(f"Summary was saved to: {output_path}")
 
         except IOError as e:
             raise Exception(f"Failed to write output file: {e}")
@@ -35,7 +35,7 @@ class FileWriter:
 - **Project Path**: {config.project_path}
 - **Local Branch**: {config.source_branch}
 - **Master Branch**: {config.target_branch}
-- **AI Model**: {config.ollama_model}
+- **AI Model**: {config.model_name}
 - **Generated**: {__import__('datetime').datetime.now().isoformat()}
 
 {separator}

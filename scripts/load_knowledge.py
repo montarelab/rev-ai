@@ -1,24 +1,24 @@
 import hashlib
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
 
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredMarkdownLoader
-from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
-from langchain_ollama import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from loguru import logger
+from loguru import logger as log
 
 DATA_DIR = Path("data")
 DB_DIR = Path("knowledge_db") 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
-OLLAMA_URL = "http://localhost:11434"
-EMBEDDING_MODEL = "llama3.2"
 BATCH_SIZE = 100
+OPENAI_MODEL='text-embedding-3-small'
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-OllamaEmbeddings
 
 class MarkdownKnowledgeETL:
     """ETL pipeline for markdown knowledge base."""
@@ -27,12 +27,12 @@ class MarkdownKnowledgeETL:
         self.db_dir = DB_DIR
         self.chunk_size = CHUNK_SIZE
         self.chunk_overlap = CHUNK_OVERLAP
-        self.ollama_url = OLLAMA_URL
-        self.embedding_model = EMBEDDING_MODEL
-        
-        self.embeddings = OllamaEmbeddings(
-            base_url=self.ollama_url,
-            model=self.embedding_model
+        self.embedding_model = OPENAI_MODEL
+        self.embedding_api_key = OPENAI_API_KEY
+
+        self.embeddings = OpenAIEmbeddings(
+            model=self.embedding_model,
+            api_key=self.embedding_api_key
         )
         
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -44,7 +44,7 @@ class MarkdownKnowledgeETL:
     
     def extract_markdown_files(self) -> List[Document]:
         """Extract all markdown files from the data directory."""
-        logger.info(f"Extracting markdown files from {self.data_dir}")
+        log.info(f"Extracting markdown files from {self.data_dir}")
         
         if not self.data_dir.exists():
             raise FileNotFoundError(f"Data directory not found: {self.data_dir}")
@@ -58,7 +58,7 @@ class MarkdownKnowledgeETL:
         )
         
         documents = loader.load()
-        logger.info(f"Loaded {len(documents)} markdown documents")
+        log.info(f"Loaded {len(documents)} markdown documents")
         
         for doc in documents:
             file_path = Path(doc.metadata.get("source", ""))
@@ -74,10 +74,11 @@ class MarkdownKnowledgeETL:
             })
         
         return documents
-    
+
+
     def transform_documents(self, documents: List[Document]) -> List[Document]:
         """Transform documents by chunking and enriching metadata."""
-        logger.info("Transforming documents: chunking and enriching metadata")
+        log.info("Transforming documents: chunking and enriching metadata")
         
         all_chunks = []
         
@@ -101,24 +102,22 @@ class MarkdownKnowledgeETL:
                 
                 all_chunks.append(chunk)
         
-        logger.info(f"Created {len(all_chunks)} chunks from {len(documents)} documents")
+        log.info(f"Created {len(all_chunks)} chunks from {len(documents)} documents")
         return all_chunks
-    
+
+
     def load_to_chromadb(self, chunks: List[Document]) -> Chroma:
         """Load chunks into ChromaDB vector store."""
-        logger.info(f"Loading {len(chunks)} chunks into ChromaDB at {self.db_dir}")
+        log.info(f"Loading {len(chunks)} chunks into ChromaDB at {self.db_dir}")
         
-        # Ensure database directory exists
         self.db_dir.mkdir(parents=True, exist_ok=True)
         
-        # Create or load existing ChromaDB
         vectorstore = Chroma(
             persist_directory=str(self.db_dir),
             embedding_function=self.embeddings,
             collection_name="knowledge_base"
         )
         
-        # Check for existing documents to avoid duplicates
         existing_ids = set()
         try:
             existing_collection = vectorstore.get()
@@ -128,9 +127,9 @@ class MarkdownKnowledgeETL:
                     for metadata in existing_collection["metadatas"] 
                     if metadata.get("chunk_id")
                 }
-                logger.info(f"Found {len(existing_ids)} existing chunks in database")
+                log.info(f"Found {len(existing_ids)} existing chunks in database")
         except Exception as e:
-            logger.warning(f"Could not check existing documents: {e}")
+            log.warning(f"Could not check existing documents: {e}")
         
         # Filter out existing chunks
         new_chunks = [
@@ -139,10 +138,10 @@ class MarkdownKnowledgeETL:
         ]
         
         if not new_chunks:
-            logger.info("No new chunks to add - all documents already exist")
+            log.info("No new chunks to add - all documents already exist")
             return vectorstore
         
-        logger.info(f"Adding {len(new_chunks)} new chunks to database")
+        log.info(f"Adding {len(new_chunks)} new chunks to database")
         
         # Add documents in batches to avoid memory issues
         for i in range(0, len(new_chunks), BATCH_SIZE):
@@ -157,23 +156,24 @@ class MarkdownKnowledgeETL:
                 ids=batch_ids
             )
             
-            logger.info(f"Added batch {i//BATCH_SIZE + 1}/{(len(new_chunks)-1)//BATCH_SIZE + 1}")
+            log.info(f"Added batch {i//BATCH_SIZE + 1}/{(len(new_chunks)-1)//BATCH_SIZE + 1}")
         
         # Persist the database
         vectorstore.persist()
-        logger.info("Successfully persisted vector database")
+        log.info("Successfully persisted vector database")
         
         return vectorstore
-    
+
+
     def run_etl(self) -> Dict[str, Any]:
         """Run the complete ETL pipeline."""
-        logger.info("Starting Knowledge Base ETL Pipeline")
+        log.info("Starting Knowledge Base ETL Pipeline")
         start_time = datetime.now()
-        
-        try:
-            documents = self.extract_markdown_files()
 
-            chunks = self.transform_documents(documents)
+        try:
+            extracted_docs = self.extract_markdown_files()
+
+            chunks = self.transform_documents(extracted_docs)
             
             vectorstore = self.load_to_chromadb(chunks)
             
@@ -182,50 +182,48 @@ class MarkdownKnowledgeETL:
             total_chunks = len(collection["ids"]) if collection and collection.get("ids") else 0
             
             end_time = datetime.now()
-
             duration = (end_time - start_time).total_seconds()
             
             stats = {
                 "status": "success",
                 "duration_seconds": duration,
-                "documents_processed": len(documents),
+                "documents_processed": len(extracted_docs),
                 "chunks_created": len(chunks),
                 "total_chunks_in_db": total_chunks,
                 "database_path": str(self.db_dir),
                 "completed_at": end_time.isoformat()
             }
             
-            logger.info(f"ETL Pipeline completed successfully in {duration:.2f}s")
-            logger.info(f"Final stats: {stats}")
-            
+            log.info(f"ETL Pipeline completed successfully in {duration:.2f}s")
             return stats
             
         except Exception as e:
-            logger.error(f"ETL Pipeline failed: {e}")
+            log.error(f"ETL Pipeline failed: {e}")
             return {
                 "status": "failed",
                 "error": str(e),
                 "failed_at": datetime.now().isoformat()
             }
 
-def print_results(result: Dict[str, Any]):
+
+def pretty_print_results(result: Dict[str, Any]):
     """Print the results of the ETL process."""
     if result["status"] == "success":
-        print(f"\nETL completed successfully!")
-        print(f"Processed {result['documents_processed']} documents")
-        print(f"Created {result['chunks_created']} chunks")
-        print(f"Total chunks in database: {result['total_chunks_in_db']}")
-        print(f"Duration: {result['duration_seconds']:.2f}s")
-        print(f"Database location: {result['database_path']}")
+        log.success(f"ETL completed successfully!")
+        log.success(f"Processed {result['documents_processed']} documents")
+        log.success(f"Created {result['chunks_created']} chunks")
+        log.success(f"Total chunks in database: {result['total_chunks_in_db']}")
+        log.success(f"Duration: {result['duration_seconds']:.2f}s")
+        log.success(f"Database location: {result['database_path']}")
     else:
-        print(f"\nETL failed: {result['error']}")
+        log.critical(f"ETL failed: {result['error']}")
         exit(1)
 
 def main():
     """Main entry point for the ETL script."""
     etl = MarkdownKnowledgeETL()
     result = etl.run_etl()
-    print_results(result)
+    pretty_print_results(result)
 
 
 if __name__ == "__main__":
