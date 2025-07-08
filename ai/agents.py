@@ -1,20 +1,18 @@
 import json
 from asyncio import Queue
-from typing import Optional, List
 
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import Tool
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_openai import ChatOpenAI
-from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 from langgraph.store.memory import InMemoryStore
 
 from ai.prompts import create_code_review_prompt
-from ai.tools.memory import mark_file_reviewed, get_reviewed_files
-from config import Config
 from ai.tools.get_file_content import get_file_content
+from ai.tools.memory import mark_file_reviewed, get_reviewed_files
 from ai.tools.regex_file_search import regex_file_search
+from config import Config
 from views.views import CodeReviewOutput
 
 

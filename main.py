@@ -13,7 +13,7 @@ from services.code_diff_analyzer import CodeDiffAnalyzer
 from services.input_validator import InputValidator
 from utils.parser import create_parser
 
-logs_dir = os.getenv("LOGS_DIR")
+logs_dir = os.getenv("LOGS_DIR", "logs")
 os.makedirs(logs_dir, exist_ok=True)
 log.add(f"{logs_dir}/app.log", rotation="1 MB", retention="10 days", level="DEBUG")
 
