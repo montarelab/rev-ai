@@ -74,8 +74,8 @@ class GitManager:
             ])
 
             if not diff:
-                log.warning("No differences found between branches")
-                return "No differences found between the specified branches."
+                log.warning(f"No difference for file {file_path} found")
+                return f"No difference for file {file_path} found."
 
             return diff
 
@@ -85,7 +85,7 @@ class GitManager:
             raise GitError(f"Failed to get diff: {e}")
 
 
-    def get_diff_names_only(self, source_branch: str, target_branch: str) -> str:
+    def get_diff_names_only(self, source_branch: str, target_branch: str) -> list[str]:
         """Get only names of the diff between two branches."""
         try:
             log.info("Fetching latest changes...")
@@ -100,10 +100,11 @@ class GitManager:
             ])
 
             if not diff:
-                log.warning("No differences found between branches")
-                return "No differences found between the specified branches."
+                log.warning("No changed files")
+                return "No changed files."
 
-            return diff
+            return diff.strip().split('\n')
+
 
         except GitError:
             raise

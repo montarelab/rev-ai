@@ -1,10 +1,11 @@
 import json
+import os
 from asyncio import Queue
-from typing import TypedDict
 
-from langchain_core.stores import InMemoryStore
-from langchain_google_vertexai import ChatVertexAI
+from langchain_core.runnables import RunnableConfig
+from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
+from langgraph.store.memory import InMemoryStore
 
 from agents.mcp import mcp_client
 from agents.memory import mark_file_reviewed, get_reviewed_files
@@ -18,17 +19,21 @@ from views.views import CodeReviewOutput
 
 DEBUG = False
 
-
-from dataclasses import dataclass
-
 store = InMemoryStore()
 
 
 def create_llm():
     """Create and configure LLM instance"""
 
-    return ChatVertexAI(
-        model='gemini-2.0-flash-lite', # todo add automatic fetching from config
+
+    # return ChatVertexAI(
+    #     model='gemini-2.0-flash-lite', # todo add automatic fetching from config
+    #     temperature=0
+    # )
+
+    return ChatOpenAI(
+        model='gpt-4.1-mini', # todo add automatic fetching from config
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
         temperature=0
     )
 
@@ -45,8 +50,7 @@ async def create_code_review_agent():
             retriever_tool,
             mark_file_reviewed,
             get_reviewed_files
-        ],
-        # + mcp_tools, todo: add mcp tools later
+        ] + mcp_tools, # todo: add mcp tools later
 
         store=store,
         response_format=CodeReviewOutput,
@@ -60,6 +64,7 @@ async def create_code_review_agent():
 
 async def summarize_review_result(
     structured_messages_queue: Queue,
+    config: RunnableConfig
 ) -> str:
 
     local_structured_messages = []
@@ -67,13 +72,14 @@ async def summarize_review_result(
     while not structured_messages_queue.empty():
         message = structured_messages_queue.get()
         local_structured_messages.append(message)
-        print("Structured Message: ", message)
 
     messages_str = json.dumps(local_structured_messages)
 
     summarizer = create_llm()
 
     summary = await summarizer.ainvoke(
-        "Summarize the changes and give the output: " + messages_str)
+        input="Summarize the changes and give the output: " + messages_str,
+        config=config
+    )
 
     return summary.content

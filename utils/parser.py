@@ -4,7 +4,7 @@ import argparse
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
-        description="AI-powered Git diff analysis with direct and interactive modes",
+        description="AI-powered Git diff analysis",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -13,16 +13,7 @@ Examples:
   %(prog)s ./my-project develop master summary.txt --model llama3.2
   %(prog)s ~/projects/app feature origin/main report.md --ollama-url http://localhost:11434
 
-  # Interactive Chat Mode:
-  %(prog)s --interactive
-  %(prog)s --interactive --model llama3.2 --ollama-url http://localhost:11434
         """
-    )
-
-    parser.add_argument(
-        "--interactive", "-i",
-        action="store_true",
-        help="Start interactive mode for guided git diff analysis"
     )
 
     parser.add_argument(
@@ -59,12 +50,6 @@ Examples:
         "--ollama-url",
         default="http://localhost:11434",
         help="Ollama server URL (default: http://localhost:11434)"
-    )
-
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose logging"
     )
 
     return parser

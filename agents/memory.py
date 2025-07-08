@@ -47,5 +47,6 @@ def get_reviewed_files(config: RunnableConfig) -> list[str]:
     store = get_store()  # get store
 
     task_id = config["configurable"].get("task_id")  # get task id from agent
-
-    return store.get(("reviewed_files",), task_id).value
+    memories = store.get(("reviewed_files",), task_id)
+    print("Memories:", memories)
+    return memories if memories else "No files reviewed yet."

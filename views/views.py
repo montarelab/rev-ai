@@ -9,6 +9,7 @@ class ChangedFile(BaseModel):
     content: str
     changes: Optional[str] = None
 
+
 class CodeReviewRequest(BaseModel):
     changed_files: List[ChangedFile]
 

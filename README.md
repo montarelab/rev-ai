@@ -1,6 +1,6 @@
 # RevAI
 
-An agentic Python application that provides intelligent analysis of git branch changes before merging. Features both CLI and interactive chat modes with AI-powered insights from specialized agents for security, performance, architecture, and documentation review.
+An agentic Python application that provides intelligent analysis of git branch changes before merging. 
 
 ## Features
 
@@ -23,8 +23,6 @@ export OLLAMA_MODEL="llama3.2"
 # Run analysis
 python main.py /path/to/project feature-branch main output.md
 
-# Interactive mode
-python main.py --interactive
 ```
 
 ## Usage

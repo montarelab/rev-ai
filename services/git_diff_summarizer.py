@@ -1,5 +1,6 @@
 import sys
 import traceback
+import uuid
 
 from loguru import logger as log
 
@@ -8,8 +9,9 @@ from config import Config
 from errors import ValidationError, GitError, OllamaError
 from services.file_writer import FileWriter
 from services.git_manager import GitManager
+from tools.get_file_content import get_file_content_with_project_oath
 from views.views import CodeReviewRequest, ChangedFile
-from tools.get_file_content import get_file_content
+
 
 class GitDiffSummarizer:
     """Main application class that orchestrates the diff summarization process."""
@@ -29,7 +31,7 @@ class GitDiffSummarizer:
             )
             log.info("Validated branches successfully.")
 
-            orchestrator = CodeReviewOrchestrator()
+            orchestrator = CodeReviewOrchestrator(self.config)
             log.info("Created orchestrator.")
 
             request = self.create_request()
@@ -55,12 +57,15 @@ class GitDiffSummarizer:
         changed_file_paths = self.git_manager.get_diff_names_only(
             self.config.source_branch, self.config.target_branch)
 
+        log.info(f"Received {len(changed_file_paths)} changed files")
+
         for file_path in changed_file_paths:
 
+            log.info(f"Preprocessing file for analysis: {file_path}")
             changes = self.git_manager.get_diff_for_file(
                 file_path, self.config.source_branch, self.config.target_branch)
 
-            content = get_file_content.invoke(file_path)
+            content = get_file_content_with_project_oath(file_path, self.config.project_path)
 
             changed_files.append(ChangedFile(
                 content=content,

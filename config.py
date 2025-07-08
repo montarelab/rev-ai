@@ -9,6 +9,8 @@ class Config:
     source_branch: str
     target_branch: str
     output_file: Path
+    thread_id: str
+    task_id: str
     ollama_model: str = "llama3.2"
     ollama_url: str = "http://localhost:11434"
 

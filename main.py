@@ -1,21 +1,20 @@
 import asyncio
 import os
 import sys
+import uuid
 
 import pyfiglet
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from loguru import logger as log
 
 from config import Config
 from errors import ValidationError
-from services.git_chat import GitDiffChat
 from services.git_diff_summarizer import GitDiffSummarizer
 from services.input_validator import InputValidator
 from utils.parser import create_parser
 
-load_dotenv()
+# load_dotenv()
 
-log.remove()
 
 logs_dir = os.getenv("LOGS_DIR")
 os.makedirs(logs_dir, exist_ok=True)
@@ -31,23 +30,9 @@ async def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    # Verbose mode
-    if args.verbose:
-        print("Verbose mode enabled")
-        log.add(sys.stderr, level="INFO",
-                   format="<green>{time:HH:mm:ss}</green> | <level>{level}</level>: <level>{message}</level>")
-
     try:
-        # Check if interactive mode is requested
-        if args.interactive:
-            log.info("Starting interactive chat mode...")
-            chat = GitDiffChat(model=args.model, ollama_url=args.ollama_url)
-            await chat.start_interactive_session()
-            return
-
-        # Validate required arguments for diff analysis mode
         if not all([args.project_path, args.source_branch, args.target_branch, args.output_file]):
-            parser.error("project_path, source_branch, target_branch, and output_file are required for direct diff analysis mode. Use --interactive for guided mode.")
+            parser.error("project_path, source_branch, target_branch, and output_file are required for direct diff analysis mode.")
 
         # Validate inputs for diff analysis
         log.info("Validating inputs...")
@@ -66,7 +51,9 @@ async def main():
             target_branch=target_branch,
             output_file=output_file,
             ollama_model=args.model,
-            ollama_url=args.ollama_url
+            ollama_url=args.ollama_url,
+            task_id=str(uuid.uuid4()),
+            thread_id=str(uuid.uuid4())
         )
 
         # Run the summarizer

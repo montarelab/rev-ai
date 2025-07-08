@@ -1,11 +1,20 @@
 import asyncio
-import uuid
 from queue import Queue
+
+from loguru import logger as log
 
 from agents.agents import create_code_review_agent, summarize_review_result
 from config import Config
+from utils.message import pretty_print_message
 from views.views import CodeReviewRequest
-from loguru import logger as log
+
+
+def print_whole_queue(queue: Queue):
+    """Print all items in the queue"""
+    while not queue.empty():
+        item = queue.get()
+        pretty_print_message(item, indent=True)
+        print(item)
 
 class CodeReviewOrchestrator:
     """Main orchestrator for code review workflow"""
@@ -15,27 +24,39 @@ class CodeReviewOrchestrator:
         self.raw_messages = Queue()
         self.structured_messages = Queue()
         self.config = config
-
-    async def _start_analyzing(self, agent, content, task_id):
-        messages = await agent.ainvoke(
-            {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": content,
-                    }
-                ],
-
-                "config": {
-                    "configurable": {  # config for memory
-                        "task_id": task_id
-                    },
-                    "app_config": self.config
-
-                }
-
+        self.task_id = config.task_id
+        self.thread_id = config.thread_id
+        self.default_config = {
+            "configurable": {
+                "thread_id": self.thread_id,
             }
+        }
+
+    async def _start_analyzing(self, agent, content):
+
+        config = self.default_config.copy()
+        config["task_id"] = self.task_id
+        config["app_config"] = self.config
+        config["project_path"] = self.config.project_path
+
+        messages = await agent.ainvoke(
+            input=content,
+            config=config
         )
+
+        try:
+            for message in messages['messages']:
+                message.pretty_print()
+        except Exception as e:
+            log.warning(f"Error printing messages: {e}")
+            if messages['messages']:
+                print("Processed messages:", messages['messages'])
+            log.warning(f"Messages were of type: {type(messages)}")
+            log.warning(f"Keys were:")
+
+            print(messages.keys())
+            print(messages)
+            # pretty_print_message(messages)
 
         structured_response = messages['structured_response']
 
@@ -45,8 +66,6 @@ class CodeReviewOrchestrator:
 
     async def review_code(self, request: CodeReviewRequest) -> str:
         """Start a new code review"""
-
-        task_id = uuid.uuid4()
 
         async with (
             asyncio.TaskGroup() as tg
@@ -62,50 +81,12 @@ class CodeReviewOrchestrator:
 
                 tg.create_task(self._start_analyzing(
                     agent=code_review_agent,
-                    content=content,
-                    task_id=task_id
+                    content=content
                 ))
 
                 log.info(f"Task for file {changed_file.file_path} started")
 
         log.info('Agents finished the tasks!')
 
-        return await summarize_review_result(self.structured_messages)
-        # try:
-        #     prompt = f"Analyze this code diff and provide feedback on potential issues, improvements, and recommendations.: {request.git_diffs}"
-        #     workflow = create_code_review_workflow({"git_diffs": request.git_diffs})
-        #
-        #     async for chunk in workflow.astream(
-        #             {
-        #                 "messages": [
-        #                     {
-        #                         "role": "user",
-        #                         "content": prompt,
-        #                     }
-        #                 ]
-        #             },
-        #     ):
-        #         pass
-        #
-        #         pretty_log.info_messages(chunk, last_message=True)
-        #
-        #     final_message_history = chunk["supervisor"]["messages"]
-        #     for message in final_message_history:
-        #         message.pretty_log.info()
-        #
-        #
-        #     log.info("Chunk: ", chunk)
-        #     return CodeReviewResponse(
-        #         status=AgentStatus.COMPLETED,
-        #         message="Code review started successfully",
-        #         estimated_completion_time=self.DEFAULT_ESTIMATED_COMPLETION_TIME,
-        #         output=chunk["supervisor"]["structured_response"]
-        #     )
-        #
-        # except Exception as e:
-        #     log.error(f"Failed to start review: {e}")
-        #     return CodeReviewResponse(
-        #         status=AgentStatus.FAILED,
-        #         message=f"Failed to start review: {str(e)}"
-        #     )
 
+        return await summarize_review_result(self.structured_messages, self.default_config)
