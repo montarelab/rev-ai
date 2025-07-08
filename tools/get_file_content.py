@@ -4,11 +4,18 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
 
-@tool()
+@tool(parse_docstring=True)
 def get_file_content(file_path: str, config: RunnableConfig):
     """
     Read the full contents of a specified source code file.
     Use this to investigate file-level logic when regex-based search doesn't provide enough context.
+
+    Args:
+        file_path (str): Absolute or relative path to the file.
+        config: Agent runtime config (RunnableConfig).
+
+    Returns:
+        str: Full contents of the file.
     """
     path_obj = Path(file_path)
     if path_obj.is_absolute():

@@ -1,17 +1,23 @@
 import subprocess
-from typing import Optional
 
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
-from psutil import Error
 
 
-@tool()
+@tool(parse_docstring=True)
 def regex_file_search(query: str, lines_of_code: int, config: RunnableConfig):
     """
     Search the codebase using a regular expression and return matching lines with context.
     This tool uses ripgrep to find symbols like functions, classes, or variables
     that may have been changed and are referenced elsewhere.
+
+    Args:
+        query (str): The regex pattern to search for.
+        lines_of_code (int): Number of context lines to include before and after each match.
+        config: Agent runtime config (RunnableConfig).
+
+    Returns:
+        list[str]: Matching lines with surrounding context.
     """
     pass
     args = [query]
@@ -21,7 +27,6 @@ def regex_file_search(query: str, lines_of_code: int, config: RunnableConfig):
 
     try:
         configurable = config["configurable"]
-        print("configurable:", configurable)
         project_path = configurable.get("project_path")  # get task id from agent
     except BaseException as e:
         print("Config issue:")

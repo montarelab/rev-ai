@@ -36,7 +36,8 @@ def mark_file_reviewed(reviewed_file: ReviewedFile, config: RunnableConfig) -> N
 @tool(parse_docstring=True)
 def get_reviewed_files(config: RunnableConfig) -> list[str]:
     """
-    Retrieve a list of all files already reviewed during the current review session.
+    Retrieve a list of all files already reviewed before you start reviewing the file.
+    If the file you are assigned to review is already reviewing, do not review it again!
 
     Args:
         config: Agent runtime config (RunnableConfig).

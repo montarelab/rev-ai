@@ -15,12 +15,10 @@ from tools.regex_file_search import regex_file_search
 from tools.retriever import retriever_tool
 from views.views import CodeReviewOutput
 
-# Import your tools
 
 DEBUG = False
 
 store = InMemoryStore()
-
 
 def create_llm():
     """Create and configure LLM instance"""

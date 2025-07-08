@@ -16,7 +16,7 @@ class CodeReviewRequest(BaseModel):
 
 @dataclass
 class CodeReviewOutput(TypedDict):
-    issue_type: str
+    comment_type: str
     severity: str
     file_path: str
     description: str

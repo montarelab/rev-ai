@@ -40,23 +40,14 @@ class CodeReviewOrchestrator:
         config["project_path"] = self.config.project_path
 
         messages = await agent.ainvoke(
-            input=content,
+            input={
+                "messages": {
+                    "role": "user",
+                    "content": content,
+                }
+            },
             config=config
         )
-
-        try:
-            for message in messages['messages']:
-                message.pretty_print()
-        except Exception as e:
-            log.warning(f"Error printing messages: {e}")
-            if messages['messages']:
-                print("Processed messages:", messages['messages'])
-            log.warning(f"Messages were of type: {type(messages)}")
-            log.warning(f"Keys were:")
-
-            print(messages.keys())
-            print(messages)
-            # pretty_print_message(messages)
 
         structured_response = messages['structured_response']
 

@@ -25,8 +25,7 @@ retriever_tool = create_retriever_tool(
     """
     Retrieve architectural or stylistic guidance from internal vectorized knowledge.
 
-    Use this to evaluate whether the code conforms to internal best practices,
-    naming conventions, architecture standards, and domain-specific logic.
+    Use this to evaluate whether the code conforms to internal naming conventions, architecture standards, and domain-specific logic.
 
     Parameters:
         query (str): A description or snippet of code to match against internal patterns.

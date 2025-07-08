@@ -45,7 +45,22 @@ Perform thorough **line-by-line analysis** of the provided file. Detect potentia
 * Naming conventions and code stylistics
 
 **Tool: context7 (MCP server)**
-Use this tool to **look up external documentation or clarify behavior of libraries** (e.g., to confirm whether a function is async-safe, deprecated, or misused).
+Use when: Any external library (non-stdlib) function/class is used. First look for library id, and after for documentation.
+Purpose: Confirm usage, behavior, async-safety, or deprecation.
+Trigger always if:
+- Usage looks unclear or complex
+- Function is rarely used, private, or from 3rd-party API, or library
+- You’re unsure — don’t guess, look it up.
+- Use this to evaluate whether the code conforms to best practices
+
+How to use:
+Context7 MCP provides the following tools that LLMs can use:
+- `resolve-library-id`: Resolves a general library name into a Context7-compatible library ID.
+    - `libraryName` (required): The name of the library to search for
+- `get-library-docs`: Fetches documentation for a library using a Context7-compatible library ID.
+    - context7CompatibleLibraryID (required): Exact Context7-compatible library ID (e.g., /mongodb/docs, /vercel/next.js)
+    - topic (optional): Focus the docs on a specific topic (e.g., "routing", "hooks")
+    - tokens (optional, default 10000): Max number of tokens to return. Values less than the default value of 10000 are automatically increased to 10000.
 
 ---
 
