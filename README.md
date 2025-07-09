@@ -4,7 +4,7 @@ A multi-agentic Python CLI application for Code Review and finding bugs before m
 
 ## Agent Architecture
 
-![Alt text][images/architecture.png]
+![Alt text](images/architecture.png)
 
 ## Examples
 
